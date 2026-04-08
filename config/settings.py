@@ -49,6 +49,12 @@ if not SECRET_KEY:
         raise ImproperlyConfigured("Задайте переменную окружения SECRET_KEY")
 
 ALLOWED_HOSTS = _env_list("ALLOWED_HOSTS", [])
+CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS", [])
+
+# Django работает за Nginx (TLS завершается на прокси).
+# Эти настройки нужны, чтобы корректно определялся https и не срабатывал ложный CSRF 403.
+USE_X_FORWARDED_HOST = _env_bool("USE_X_FORWARDED_HOST", True)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # Application definition
