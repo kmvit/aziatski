@@ -462,8 +462,18 @@ systemctl restart "${GUNICORN_SERVICE}"
 
 # --- 6. Nginx ---
 echo "[6/8] Настройка Nginx..."
+if ! command -v nginx >/dev/null 2>&1; then
+  echo "Nginx не найден в системе (команда nginx отсутствует)."
+  echo "Проверьте установку пакета nginx и запустите скрипт снова."
+  exit 1
+fi
+
+NGINX_AVAILABLE_DIR="/etc/nginx/sites-available"
+NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
+mkdir -p "${NGINX_AVAILABLE_DIR}" "${NGINX_ENABLED_DIR}"
+
 if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
-cat > "/etc/nginx/sites-available/${NGINX_SITE}" <<NGINX
+cat > "${NGINX_AVAILABLE_DIR}/${NGINX_SITE}" <<NGINX
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -517,7 +527,7 @@ server {
 }
 NGINX
 else
-cat > "/etc/nginx/sites-available/${NGINX_SITE}" <<NGINX
+cat > "${NGINX_AVAILABLE_DIR}/${NGINX_SITE}" <<NGINX
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -541,7 +551,7 @@ server {
 NGINX
 fi
 
-ln -sf "/etc/nginx/sites-available/${NGINX_SITE}" "/etc/nginx/sites-enabled/${NGINX_SITE}"
+ln -sf "${NGINX_AVAILABLE_DIR}/${NGINX_SITE}" "${NGINX_ENABLED_DIR}/${NGINX_SITE}"
 nginx -t && systemctl reload nginx
 
 # --- 7. Суперпользователь (опционально) ---
