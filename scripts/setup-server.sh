@@ -39,6 +39,7 @@ DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 GUNICORN_WORKERS="${GUNICORN_WORKERS:-3}"
 GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-120}"
+export DEBIAN_FRONTEND="${DEBIAN_FRONTEND:-noninteractive}"
 
 slugify() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '_' | sed 's/^_//; s/_$//'
@@ -269,9 +270,45 @@ fi
 
 # --- 1. Система и пакеты ---
 echo "[1/7] Обновление системы и установка пакетов..."
-apt-get update -qq
-apt-get upgrade -y -qq
-apt-get install -y -qq python3 python3-pip python3-venv nginx postgresql postgresql-contrib nodejs npm
+apt_get_install() {
+  local packages=("$@")
+  if ! apt-get install -y "${packages[@]}"; then
+    echo "Ошибка установки пакетов: ${packages[*]}"
+    echo "Пробуем восстановить состояние APT (dpkg --configure -a, apt-get -f install)..."
+    dpkg --configure -a || true
+    apt-get -f install -y || true
+    if ! apt-get install -y "${packages[@]}"; then
+      echo "Не удалось установить пакеты после восстановления."
+      held_packages="$(apt-mark showhold || true)"
+      if [[ -n "${held_packages}" ]]; then
+        echo "Обнаружены удерживаемые пакеты (hold):"
+        echo "${held_packages}"
+        echo "Снимите hold при необходимости (пример): apt-mark unhold <package>"
+      fi
+      exit 1
+    fi
+  fi
+}
+
+apt-get update
+apt-get upgrade -y
+
+base_packages=(
+  python3
+  python3-pip
+  python3-venv
+  nginx
+  postgresql
+  postgresql-contrib
+)
+apt_get_install "${base_packages[@]}"
+
+if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
+  echo "Обнаружен frontend: устанавливаю nodejs и npm..."
+  apt_get_install nodejs npm
+else
+  echo "Frontend отключен: nodejs и npm не устанавливаются."
+fi
 
 # --- 2. PostgreSQL ---
 echo "[2/7] Настройка PostgreSQL..."
