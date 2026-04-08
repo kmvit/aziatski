@@ -11,7 +11,7 @@
 #   sudo bash setup-server.sh
 #
 # Переменные (задать до запуска или ввести по запросу):
-#   APP_DIR           — каталог приложения (по умолчанию /opt/django_project)
+#   APP_DIR           — каталог приложения (по умолчанию: корень проекта, где лежит этот скрипт)
 #   PROJECT_NAME      — имя проекта (для имен файлов/сервисов)
 #   DOMAIN            — домен или IP (например example.com)
 #   APP_SCHEME        — http/https (по умолчанию https)
@@ -25,10 +25,14 @@
 #   REQUIREMENTS_FILE — относительный путь до requirements.txt
 #   WSGI_MODULE       — python-путь до WSGI app, например config.wsgi:application
 #   STATIC_ROOT       — абсолютный путь до staticfiles (по умолчанию APP_DIR/DJANGO_DIR/staticfiles)
+#   FRONTEND_DIR      — относительный путь до фронтенда с package.json (по умолчанию frontend, если найден)
+#   FRONTEND_BUILD_DIR — путь до собранного фронта (по умолчанию FRONTEND_DIR/dist)
 #
 set -e
 
-APP_DIR="${APP_DIR:-/opt/django_project}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+DEFAULT_APP_DIR="$(dirname "${SCRIPT_DIR}")"
+APP_DIR="${APP_DIR:-${DEFAULT_APP_DIR}}"
 SERVICE_USER="${SERVICE_USER:-www-data}"
 APP_SCHEME="${APP_SCHEME:-https}"
 DB_HOST="${DB_HOST:-localhost}"
@@ -41,12 +45,40 @@ slugify() {
 }
 
 detect_wsgi_module() {
-  local manage_py="$1/manage.py"
-  python3 - "$manage_py" <<'PY'
+  local django_root="$1"
+  local manage_py="$django_root/manage.py"
+  python3 - "$django_root" "$manage_py" <<'PY'
+import os
 import re
 import sys
 
-path = sys.argv[1]
+django_root = sys.argv[1]
+path = sys.argv[2]
+
+# 1) Надёжный путь: находим реальный wsgi.py в дереве проекта.
+wsgi_candidates = []
+for root, dirs, files in os.walk(django_root):
+    dirs[:] = [d for d in dirs if d not in {".venv", "venv", "__pycache__", ".git", "node_modules"}]
+    if "wsgi.py" in files:
+        full_path = os.path.join(root, "wsgi.py")
+        rel_path = os.path.relpath(full_path, django_root)
+        mod = rel_path[:-3].replace(os.sep, ".")
+        if mod:
+            wsgi_candidates.append(mod)
+
+if len(wsgi_candidates) == 1:
+    print(f"{wsgi_candidates[0]}:application")
+    raise SystemExit(0)
+elif len(wsgi_candidates) > 1:
+    # Предпочитаем классический вариант <package>.wsgi
+    preferred = [m for m in wsgi_candidates if m.endswith(".wsgi") and ".settings." not in m]
+    if preferred:
+        print(f"{sorted(preferred, key=len)[0]}:application")
+        raise SystemExit(0)
+    print(f"{sorted(wsgi_candidates, key=len)[0]}:application")
+    raise SystemExit(0)
+
+# 2) Fallback: пробуем вывести модуль из DJANGO_SETTINGS_MODULE в manage.py.
 try:
     with open(path, "r", encoding="utf-8") as f:
         content = f.read()
@@ -63,12 +95,19 @@ if not m:
     raise SystemExit(0)
 
 settings_module = m.group(1).strip()
-if "." in settings_module:
-    base_module = settings_module.rsplit(".", 1)[0]
-else:
-    base_module = settings_module
 
-print(f"{base_module}.wsgi:application")
+if ".settings." in settings_module:
+    project_module = settings_module.split(".settings.", 1)[0]
+    print(f"{project_module}.wsgi:application")
+    raise SystemExit(0)
+if settings_module.endswith(".settings"):
+    project_module = settings_module[: -len(".settings")]
+    print(f"{project_module}.wsgi:application")
+    raise SystemExit(0)
+if "." in settings_module:
+    print(f"{settings_module.rsplit('.', 1)[0]}.wsgi:application")
+else:
+    print(f"{settings_module}.wsgi:application")
 PY
 }
 
@@ -195,6 +234,21 @@ NGINX_SITE="${PROJECT_SLUG}"
 STATIC_ROOT="${STATIC_ROOT:-${APP_DIR}/${DJANGO_DIR}/staticfiles}"
 ORIGIN="${APP_SCHEME}://${DOMAIN}"
 
+if [[ -z "${FRONTEND_DIR:-}" ]]; then
+  if [[ -f "${APP_DIR}/frontend/package.json" ]]; then
+    FRONTEND_DIR="frontend"
+  fi
+fi
+
+ENABLE_FRONTEND="false"
+if [[ -n "${FRONTEND_DIR:-}" && -f "${APP_DIR}/${FRONTEND_DIR}/package.json" ]]; then
+  ENABLE_FRONTEND="true"
+fi
+
+if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
+  FRONTEND_BUILD_DIR="${FRONTEND_BUILD_DIR:-${APP_DIR}/${FRONTEND_DIR}/dist}"
+fi
+
 echo "Настройка:"
 echo "  PROJECT_NAME=${PROJECT_NAME}"
 echo "  APP_DIR=${APP_DIR}"
@@ -206,12 +260,18 @@ echo "  REQUIREMENTS_FILE=${REQUIREMENTS_FILE}"
 echo "  WSGI_MODULE=${WSGI_MODULE}"
 echo "  DB_NAME=${DB_NAME}"
 echo "  DB_USER=${DB_USER}"
+if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
+  echo "  FRONTEND_DIR=${FRONTEND_DIR}"
+  echo "  FRONTEND_BUILD_DIR=${FRONTEND_BUILD_DIR}"
+else
+  echo "  FRONTEND=disabled"
+fi
 
 # --- 1. Система и пакеты ---
 echo "[1/7] Обновление системы и установка пакетов..."
 apt-get update -qq
 apt-get upgrade -y -qq
-apt-get install -y -qq python3 python3-pip python3-venv nginx postgresql postgresql-contrib
+apt-get install -y -qq python3 python3-pip python3-venv nginx postgresql postgresql-contrib nodejs npm
 
 # --- 2. PostgreSQL ---
 echo "[2/7] Настройка PostgreSQL..."
@@ -278,6 +338,18 @@ with open(path, 'w') as f:
 "
 }
 
+# Основные переменные, которые читает текущий settings/base.py
+set_env_var "DB_NAME" "${DB_NAME}"
+set_env_var "DB_USER" "${DB_USER}"
+set_env_var "DB_PASSWORD" "${DB_PASSWORD}"
+set_env_var "DB_HOST" "${DB_HOST}"
+set_env_var "DB_PORT" "${DB_PORT}"
+set_env_var "SECRET_KEY" "${DJANGO_SECRET}"
+set_env_var "DEBUG" "False"
+set_env_var "ALLOWED_HOSTS" "127.0.0.1,localhost,${DOMAIN}"
+set_env_var "CSRF_TRUSTED_ORIGINS" "${ORIGIN}"
+
+# Обратная совместимость со старыми именами переменных
 set_env_var "POSTGRES_DB" "${DB_NAME}"
 set_env_var "POSTGRES_USER" "${DB_USER}"
 set_env_var "POSTGRES_PASSWORD" "${DB_PASSWORD}"
@@ -296,15 +368,35 @@ fi
 .venv/bin/pip install -q -r "${REQUIREMENTS_FILE}"
 .venv/bin/pip install -q gunicorn
 
+# Django logging может писать в BASE_DIR/logs/django.log.
+# Создаём каталог заранее, чтобы migrate/collectstatic не падали.
+mkdir -p "${APP_DIR}/${DJANGO_DIR}/logs"
+
 # миграции и статика
 .venv/bin/python "${MANAGE_PY_REL}" migrate --noinput
 .venv/bin/python "${MANAGE_PY_REL}" collectstatic --noinput --clear
+
+# фронтенд (опционально): сборка для Nginx
+if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
+  echo "[4/8] Сборка frontend..."
+  if [[ -f "${APP_DIR}/${FRONTEND_DIR}/package-lock.json" ]]; then
+    npm --prefix "${APP_DIR}/${FRONTEND_DIR}" ci
+  else
+    npm --prefix "${APP_DIR}/${FRONTEND_DIR}" install
+  fi
+  npm --prefix "${APP_DIR}/${FRONTEND_DIR}" run build
+
+  if [[ ! -f "${FRONTEND_BUILD_DIR}/index.html" ]]; then
+    echo "Не найден собранный frontend: ${FRONTEND_BUILD_DIR}/index.html"
+    exit 1
+  fi
+fi
 
 # владелец — сервисный пользователь
 chown -R ${SERVICE_USER}:${SERVICE_USER} "${APP_DIR}"
 
 # --- 4. Gunicorn (systemd) ---
-echo "[4/7] Установка сервиса Gunicorn..."
+echo "[5/8] Установка сервиса Gunicorn..."
 cat > "/etc/systemd/system/${GUNICORN_SERVICE}.service" <<GUNICORN
 [Unit]
 Description=Gunicorn daemon for ${PROJECT_NAME}
@@ -331,8 +423,63 @@ systemctl daemon-reload
 systemctl enable "${GUNICORN_SERVICE}"
 systemctl restart "${GUNICORN_SERVICE}"
 
-# --- 5. Nginx ---
-echo "[5/7] Настройка Nginx..."
+# --- 6. Nginx ---
+echo "[6/8] Настройка Nginx..."
+if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
+cat > "/etc/nginx/sites-available/${NGINX_SITE}" <<NGINX
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    client_max_body_size 50M;
+
+    location /static/ {
+        alias ${STATIC_ROOT}/;
+    }
+
+    location /media/ {
+        alias ${APP_DIR}/${DJANGO_DIR}/media/;
+    }
+
+    location /api/ {
+        proxy_pass http://unix:${SOCKET_PATH};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    location /admin/ {
+        proxy_pass http://unix:${SOCKET_PATH};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    location /assets/ {
+        alias ${FRONTEND_BUILD_DIR}/assets/;
+        access_log off;
+        expires 30d;
+    }
+
+    location = /favicon.ico {
+        alias ${FRONTEND_BUILD_DIR}/favicon.ico;
+        access_log off;
+        log_not_found off;
+    }
+
+    location / {
+        root ${FRONTEND_BUILD_DIR};
+        try_files \$uri /index.html;
+    }
+}
+NGINX
+else
 cat > "/etc/nginx/sites-available/${NGINX_SITE}" <<NGINX
 server {
     listen 80;
@@ -355,21 +502,25 @@ server {
     }
 }
 NGINX
+fi
 
 ln -sf "/etc/nginx/sites-available/${NGINX_SITE}" "/etc/nginx/sites-enabled/${NGINX_SITE}"
 nginx -t && systemctl reload nginx
 
-# --- 6. Суперпользователь (опционально) ---
-echo "[6/7] Суперпользователь Django (опционально)."
+# --- 7. Суперпользователь (опционально) ---
+echo "[7/8] Суперпользователь Django (опционально)."
 echo "Создайте вручную, если нужно:"
 echo "  cd ${APP_DIR} && .venv/bin/python ${MANAGE_PY_REL} createsuperuser"
 
-# --- 7. Итог ---
-echo "[7/7] Готово."
+# --- 8. Итог ---
+echo "[8/8] Готово."
 echo ""
 echo "  Приложение:  ${ORIGIN}"
 echo "  Статика:     ${STATIC_ROOT}/"
 echo "  Gunicorn:    ${GUNICORN_SERVICE}.service"
 echo "  Nginx site:  ${NGINX_SITE}"
+if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
+  echo "  Frontend:    ${FRONTEND_BUILD_DIR}"
+fi
 echo "  Логи:        journalctl -u ${GUNICORN_SERVICE} -f"
 echo ""

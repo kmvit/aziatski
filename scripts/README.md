@@ -2,17 +2,18 @@
 
 ## setup-server.sh
 
-Универсально настраивает Ubuntu под любой Django-проект:
+Универсально настраивает Ubuntu под Django-проект (и опционально frontend на Vite/React):
 
 - обновление системы, установка nginx, PostgreSQL, Python3/venv
 - создание БД и пользователя PostgreSQL
 - разворот приложения в `APP_DIR`: venv, зависимости, миграции, статика
+- сборка frontend (если найден `frontend/package.json`) и раздача через Nginx
 - сервис Gunicorn (`gunicorn-<project_name>.service`)
 - конфиг Nginx (`/etc/nginx/sites-available/<project_name>`)
 
 **Использование на сервере:**
 
-1. Склонируйте или скопируйте Django-проект в `APP_DIR` (по умолчанию `/opt/django_project`).
+1. Склонируйте или скопируйте Django-проект в `APP_DIR` (по умолчанию — корень проекта, то есть родитель папки `scripts`, где лежит `setup-server.sh`).
    Скрипт автоматически ищет `manage.py` в корне и в `backend/`, либо запросит путь вручную.
 
 2. Запустите скрипт от root:
@@ -48,6 +49,8 @@ export DJANGO_DIR=backend
 export REQUIREMENTS_FILE=backend/requirements.txt
 export WSGI_MODULE=config.wsgi:application
 export STATIC_ROOT=/opt/my_django_project/backend/staticfiles
+export FRONTEND_DIR=frontend
+export FRONTEND_BUILD_DIR=/opt/my_django_project/frontend/dist
 
 sudo -E bash scripts/setup-server.sh
 ```
