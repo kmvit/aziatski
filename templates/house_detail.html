@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ house.name }} — Азиатский{% endblock %}
+{% block body_attrs %}data-nav-solid="true"{% endblock %}
+
+{% block content %}
+
+<!-- Hero with gallery -->
+<section class="pt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-stone-400 mb-6">
+            <a href="{% url 'index' %}" class="hover:text-forest-500 transition-colors">Главная</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'index' %}#houses" class="hover:text-forest-500 transition-colors">Дома</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-forest-600 font-medium">{{ house.name }}</span>
+        </nav>
+
+        <!-- Gallery -->
+        <div x-data="{ activeImage: 0 }" class="mb-12">
+            {% if house.images.all %}
+            <!-- Main Image -->
+            <div class="rounded-3xl overflow-hidden aspect-[16/9] bg-stone-100 mb-4">
+                {% for img in house.images.all %}
+                <img x-show="activeImage === {{ forloop.counter0 }}"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                     src="{{ img.image.url }}" alt="{{ house.name }}"
+                     class="w-full h-full object-cover">
+                {% endfor %}
+            </div>
+            <!-- Thumbnails -->
+            {% if house.images.count > 1 %}
+            <div class="flex gap-3 overflow-x-auto pb-2">
+                {% for img in house.images.all %}
+                <button @click="activeImage = {{ forloop.counter0 }}"
+                        class="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 transition-all"
+                        :class="activeImage === {{ forloop.counter0 }} ? 'border-forest-500 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'">
+                    <img src="{{ img.image.url }}" alt="" class="w-full h-full object-cover">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% else %}
+            <!-- Placeholder -->
+            <div class="rounded-3xl overflow-hidden aspect-[16/9] bg-gradient-to-br from-forest-100 to-forest-200 flex items-center justify-center">
+                <div class="text-center text-forest-500/40">
+                    <i data-lucide="image" class="w-20 h-20 mx-auto mb-3"></i>
+                    <p class="text-lg">Добавьте фотографии через Django Admin</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 pb-24">
+            <!-- Main content -->
+            <div class="lg:col-span-2">
+                <h1 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-3">{{ house.name }}</h1>
+                {% if house.tagline %}
+                <p class="text-xl text-stone-400 mb-8">{{ house.tagline }}</p>
+                {% endif %}
+
+                <!-- Features row -->
+                <div class="flex flex-wrap gap-4 mb-10">
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-forest-50 rounded-xl text-forest-700">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        <span class="font-medium">{{ house.guests_count }} гостей</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-forest-50 rounded-xl text-forest-700">
+                        <i data-lucide="bed-double" class="w-5 h-5"></i>
+                        <span class="font-medium">{{ house.bedrooms }} спальни</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-forest-50 rounded-xl text-forest-700">
+                        <i data-lucide="bed-single" class="w-5 h-5"></i>
+                        <span class="font-medium">{{ house.beds }} кровати</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-forest-50 rounded-xl text-forest-700">
+                        <i data-lucide="bath" class="w-5 h-5"></i>
+                        <span class="font-medium">{{ house.bathrooms }} санузел</span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="prose prose-lg prose-stone max-w-none mb-10">
+                    <h3 class="font-display text-2xl font-bold text-forest-700 mb-4">О доме</h3>
+                    <div class="text-stone-400 leading-relaxed space-y-4">
+                        {{ house.description|linebreaksbr }}
+                    </div>
+                </div>
+
+                <!-- Amenities -->
+                {% if house.amenities_list %}
+                <div>
+                    <h3 class="font-display text-2xl font-bold text-forest-700 mb-6">Удобства</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {% for amenity in house.amenities_list %}
+                        <div class="flex items-center gap-3 p-3 bg-stone-50 rounded-xl">
+                            <div class="w-8 h-8 rounded-lg bg-forest-100 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            </div>
+                            <span class="text-stone-500">{{ amenity }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar — Booking card -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-28 bg-white rounded-3xl shadow-lg shadow-forest-500/5 p-8 border border-stone-100">
+                    <!-- Price -->
+                    <div class="flex items-baseline gap-2 mb-2">
+                        <span class="font-display text-4xl font-bold text-forest-600">от {{ house.price_per_night }} &#x20bd;</span>
+                        <span class="text-stone-400">/ сутки</span>
+                    </div>
+                    {% if house.weekend_price %}
+                    <div class="text-sm text-stone-400 mb-6">Выходные — {{ house.weekend_price }} &#x20bd;/сутки</div>
+                    {% endif %}
+
+                    <div class="border-t border-stone-100 pt-6 mb-6">
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-stone-400">Гостей до</span>
+                                <span class="font-medium text-stone-500">{{ house.guests_count }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-stone-400">Спальни</span>
+                                <span class="font-medium text-stone-500">{{ house.bedrooms }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-stone-400">Санузлы</span>
+                                <span class="font-medium text-stone-500">{{ house.bathrooms }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'booking_page' %}?house={{ house.id }}"
+                       class="block w-full text-center px-6 py-4 bg-forest-500 text-white font-semibold rounded-xl hover:bg-forest-600 transition-all hover:shadow-lg hover:shadow-forest-500/25 text-lg mb-4">
+                        Забронировать
+                    </a>
+
+                    {% if settings.phone %}
+                    <a href="tel:{{ settings.phone }}"
+                       class="block w-full text-center px-6 py-3 bg-forest-50 text-forest-600 font-medium rounded-xl hover:bg-forest-100 transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <i data-lucide="phone" class="w-4 h-4"></i> Позвонить
+                        </span>
+                    </a>
+                    {% endif %}
+
+                    {% if settings.whatsapp %}
+                    <a href="https://wa.me/{{ settings.whatsapp }}" target="_blank"
+                       class="block w-full text-center px-6 py-3 mt-3 bg-green-50 text-green-700 font-medium rounded-xl hover:bg-green-100 transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+                        </span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}

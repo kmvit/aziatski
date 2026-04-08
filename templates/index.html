@@ -1,0 +1,644 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="relative" id="page-content">
+
+<!-- River line weaving between sections -->
+<div class="absolute left-0 right-0 top-0 pointer-events-none z-[2] hidden lg:block" id="river-line" style="height: 100%;">
+    <svg class="w-full h-full" preserveAspectRatio="none" id="river-svg">
+        <defs>
+            <linearGradient id="river-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4A7C59" stop-opacity="0"/>
+                <stop offset="5%" stop-color="#5B9BD5" stop-opacity="0.25"/>
+                <stop offset="50%" stop-color="#4A9CC7" stop-opacity="0.2"/>
+                <stop offset="95%" stop-color="#5B9BD5" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#4A7C59" stop-opacity="0"/>
+            </linearGradient>
+            <filter id="river-glow">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+        </defs>
+        <path id="river-path" stroke="url(#river-grad)" stroke-width="2" fill="none" filter="url(#river-glow)"/>
+        <path id="river-path-thin" stroke="url(#river-grad)" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="6 10"/>
+    </svg>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <!-- Background photo with parallax-like slow zoom -->
+    <div class="absolute inset-0">
+        <img src="{% static 'images/hero-bg.jpeg' %}" alt="Поселок Азиатский с высоты"
+             class="w-full h-full object-cover hero-zoom">
+    </div>
+
+    <!-- Gradient overlay — soft, mostly bottom for info-bar -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-transparent pointer-events-none"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+
+    <!-- Left-aligned hero text like resort-arkhyz -->
+    <div class="absolute inset-0 z-10 flex items-end pb-48 sm:pb-36">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="max-w-2xl">
+                <h1 class="font-display text-6xl sm:text-8xl lg:text-9xl font-extrabold text-white leading-[0.9] mb-6 hero-text-shadow">
+                    Азиатский
+                </h1>
+                <p class="text-white/80 text-lg sm:text-xl leading-relaxed mb-8 max-w-lg hero-text-shadow">
+                    Горный поселок у реки Большая Лаба в Карачаево-Черкесии. Уютные дома, тишина и настоящий кавказский отдых.
+                </p>
+                <a href="#houses"
+                   class="inline-flex items-center gap-2 px-8 py-4 bg-forest-500 text-white font-bold rounded-full hover:bg-forest-600 transition-all hover:shadow-lg hover:shadow-forest-500/30 text-base sm:text-lg group">
+                    Выбрать дом
+                    <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll indicator — positioned relative to section, not content -->
+    <div class="absolute bottom-36 left-1/2 -translate-x-1/2 z-10 animate-bounce hidden sm:block">
+        <i data-lucide="chevron-down" class="w-6 h-6 text-white/50"></i>
+    </div>
+
+    <!-- Weather + Route — compact, bottom right -->
+    <div class="absolute bottom-4 sm:bottom-6 right-4 sm:right-8 lg:right-16 z-20">
+        <div class="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 px-5 py-3"
+             x-data="weatherWidget()" x-init="fetchWeather()">
+            <!-- Weather -->
+            <div class="flex items-center gap-3">
+                <i data-lucide="cloud-sun" class="w-5 h-5 text-white/70"></i>
+                <span class="text-white font-display font-bold text-lg leading-none" x-text="temp">--°С</span>
+                <span class="text-white/50 text-xs hidden sm:inline" x-text="desc">Загрузка...</span>
+            </div>
+            <div class="w-px h-8 bg-white/20"></div>
+            <!-- Route -->
+            <a href="https://yandex.ru/maps/?rtext=~43.9647,40.8833&rtt=auto" target="_blank"
+               class="flex items-center gap-2 text-white/70 hover:text-white transition-colors group">
+                <i data-lucide="navigation" class="w-4 h-4"></i>
+                <span class="text-xs font-medium">Как проехать</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== HOUSES ==================== -->
+<section id="houses" class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16 reveal">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-50 rounded-full mb-6">
+                <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+                <span class="text-forest-600 text-sm font-medium">Размещение</span>
+            </div>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-4">
+                Наши дома
+            </h2>
+            <p class="text-stone-400 text-lg max-w-2xl mx-auto">
+                Каждый дом — это уютное пространство с видом на горы, оборудованное всем необходимым для комфортного отдыха
+            </p>
+        </div>
+
+        {% if houses %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {% for house in houses %}
+            <a href="{% url 'house_detail' house.slug %}"
+               class="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-stone-100 reveal-scale reveal-delay-{{ forloop.counter }}"
+                <!-- Image -->
+                <div class="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-forest-100 to-forest-200">
+                    {% if house.get_main_image %}
+                    <img src="{{ house.get_main_image.image.url }}" alt="{{ house.name }}"
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy">
+                    {% else %}
+                    <div class="flex items-center justify-center h-full">
+                        <div class="text-center text-forest-500/40">
+                            <i data-lucide="home" class="w-16 h-16 mx-auto mb-2"></i>
+                            <span class="text-sm">Фото дома</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- Price badge -->
+                    <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full">
+                        <span class="font-display font-bold text-forest-600">{{ house.price_per_night }} &#x20bd;</span>
+                        <span class="text-stone-400 text-sm"> / сутки</span>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="p-6">
+                    <h3 class="font-display text-2xl font-bold text-forest-700 mb-2 group-hover:text-forest-500 transition-colors">
+                        {{ house.name }}
+                    </h3>
+                    {% if house.tagline %}
+                    <p class="text-stone-400 mb-4">{{ house.tagline }}</p>
+                    {% endif %}
+
+                    <!-- Features -->
+                    <div class="flex items-center gap-6 text-sm text-stone-400">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>{{ house.guests_count }} гостей</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="bed-double" class="w-4 h-4"></i>
+                            <span>{{ house.bedrooms }} спальни</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="bath" class="w-4 h-4"></i>
+                            <span>{{ house.bathrooms }} санузел</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Placeholder cards if no houses in DB -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {% for i in "1234" %}
+            <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100">
+                <div class="aspect-[16/10] bg-gradient-to-br from-forest-100 to-forest-200 flex items-center justify-center">
+                    <div class="text-center text-forest-500/40">
+                        <i data-lucide="home" class="w-16 h-16 mx-auto mb-2"></i>
+                        <span class="text-sm">Добавьте дома через Django Admin</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="h-6 bg-stone-100 rounded-lg w-2/3 mb-3"></div>
+                    <div class="h-4 bg-stone-50 rounded-lg w-full mb-4"></div>
+                    <div class="flex gap-6">
+                        <div class="h-4 bg-stone-50 rounded w-20"></div>
+                        <div class="h-4 bg-stone-50 rounded w-20"></div>
+                        <div class="h-4 bg-stone-50 rounded w-20"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Photo divider: after houses -->
+{% with divider=dividers.after_houses %}
+{% if divider %}
+<div class="relative h-64 sm:h-80 overflow-hidden">
+    {% if divider.image %}<div class="absolute inset-0 photo-parallax bg-cover bg-center" style="background-image: url('{{ divider.image.url }}');"></div>{% else %}<div class="absolute inset-0 bg-gradient-to-br from-forest-700 to-forest-900"></div>{% endif %}
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative z-10 flex items-center justify-center h-full text-center px-4">
+        <div class="reveal">
+            <i data-lucide="{{ divider.icon }}" class="w-8 h-8 text-white/40 mx-auto mb-4"></i>
+            <p class="font-display text-2xl sm:text-3xl font-bold text-white hero-text-shadow max-w-2xl">{{ divider.title }}</p>
+            {% if divider.subtitle %}<p class="text-white/60 mt-3 text-sm">{{ divider.subtitle }}</p>{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ==================== ABOUT ==================== -->
+<section id="about" class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div class="reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-50 rounded-full mb-6">
+                    <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+                    <span class="text-forest-600 text-sm font-medium">О поселке</span>
+                </div>
+                <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-6 leading-tight">
+                    {{ settings.about_title }}
+                </h2>
+                <div class="space-y-4 text-stone-400 leading-relaxed text-lg">
+                    {{ settings.about_text|linebreaksbr }}
+                </div>
+                <div class="grid grid-cols-3 gap-6 mt-10 pt-10 border-t border-stone-200"
+                     x-data="{ shown: false, v1: 0, v2: 0, v3: 0 }"
+                     x-intersect.once="shown = true;
+                        let i1 = setInterval(() => { v1 += 20; if(v1>=800) { v1=800; clearInterval(i1) } }, 30);
+                        let i2 = setInterval(() => { v2++; if(v2>=7) clearInterval(i2) }, 150);
+                        let i3 = setInterval(() => { v3 += 8; if(v3>=365) { v3=365; clearInterval(i3) } }, 20);">
+                    <div>
+                        <div class="font-display text-3xl font-bold text-forest-600"><span x-text="v1">0</span>+</div>
+                        <div class="text-sm text-stone-400 mt-1">метров над уровнем моря</div>
+                    </div>
+                    <div>
+                        <div class="font-display text-3xl font-bold text-forest-600"><span x-text="v2">0</span>+</div>
+                        <div class="text-sm text-stone-400 mt-1">видов активного отдыха</div>
+                    </div>
+                    <div>
+                        <div class="font-display text-3xl font-bold text-forest-600"><span x-text="v3">0</span></div>
+                        <div class="text-sm text-stone-400 mt-1">дней красоты в году</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 reveal reveal-delay-2">
+                <div class="space-y-4">
+                    <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-forest-200 to-forest-300 aspect-[3/4] flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div class="text-center text-forest-600/50 p-4">
+                            <i data-lucide="mountain" class="w-12 h-12 mx-auto mb-2"></i>
+                            <span class="text-xs">Фото горы</span>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 aspect-square flex items-center justify-center shadow-lg">
+                        <div class="text-center text-blue-500/50 p-4">
+                            <i data-lucide="waves" class="w-12 h-12 mx-auto mb-2"></i>
+                            <span class="text-xs">Фото реки</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4 pt-8">
+                    <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-wood-100 to-wood-200 aspect-square flex items-center justify-center shadow-lg">
+                        <div class="text-center text-wood-500/50 p-4">
+                            <i data-lucide="home" class="w-12 h-12 mx-auto mb-2"></i>
+                            <span class="text-xs">Фото поселка</span>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-forest-100 to-forest-200 aspect-[3/4] flex items-center justify-center shadow-lg">
+                        <div class="text-center text-forest-500/50 p-4">
+                            <i data-lucide="trees" class="w-12 h-12 mx-auto mb-2"></i>
+                            <span class="text-xs">Фото природы</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Photo divider: after about -->
+{% with divider=dividers.after_about %}
+{% if divider %}
+<div class="relative h-64 sm:h-80 overflow-hidden">
+    {% if divider.image %}<div class="absolute inset-0 photo-parallax bg-cover bg-center" style="background-image: url('{{ divider.image.url }}');"></div>{% else %}<div class="absolute inset-0 bg-gradient-to-br from-forest-700 to-forest-900"></div>{% endif %}
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative z-10 flex items-center justify-center h-full text-center px-4">
+        <div class="reveal">
+            <i data-lucide="{{ divider.icon }}" class="w-8 h-8 text-white/40 mx-auto mb-4"></i>
+            <p class="font-display text-2xl sm:text-3xl font-bold text-white hero-text-shadow max-w-2xl">{{ divider.title }}</p>
+            {% if divider.subtitle %}<p class="text-white/60 mt-3 text-sm">{{ divider.subtitle }}</p>{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ==================== ACTIVITIES ==================== -->
+<section id="activities" class="py-16 sm:py-20 bg-cream overflow-hidden"
+         x-data="activityCarousel()" x-init="init()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header with arrows -->
+        <div class="flex items-end justify-between mb-12">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-50 rounded-full mb-6">
+                    <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+                    <span class="text-forest-600 text-sm font-medium">Чем заняться</span>
+                </div>
+                <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-2">
+                    Активный отдых
+                </h2>
+                <p class="text-stone-400 text-lg max-w-xl">
+                    Множество возможностей для незабываемого отдыха на любой вкус
+                </p>
+            </div>
+            <div class="hidden sm:flex items-center gap-3">
+                <button @click="prev()"
+                        class="w-12 h-12 rounded-full border-2 border-forest-200 flex items-center justify-center hover:bg-forest-500 hover:border-forest-500 hover:text-white text-forest-400 transition-all">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <button @click="next()"
+                        class="w-12 h-12 rounded-full border-2 border-forest-200 flex items-center justify-center hover:bg-forest-500 hover:border-forest-500 hover:text-white text-forest-400 transition-all">
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carousel track — full-bleed -->
+    <div class="relative">
+        <div class="flex gap-5 transition-transform duration-500 ease-out pl-4 sm:pl-[max(1rem,calc((100vw-80rem)/2+1rem))]"
+             :style="`transform: translateX(-${offset}px)`"
+             x-ref="track"
+             @mousedown.prevent="startDrag($event)"
+             @touchstart.passive="startDrag($event)"
+             style="cursor: grab;">
+
+            {% if activities %}
+            {% for activity in activities %}
+            <div class="flex-shrink-0 w-72 sm:w-80 group select-none">
+                <!-- Card -->
+                <div class="relative rounded-3xl overflow-hidden aspect-[3/4] shadow-lg">
+                    {% if activity.image %}
+                    <img src="{{ activity.image.url }}" alt="{{ activity.name }}"
+                         class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" draggable="false">
+                    {% else %}
+                    <div class="absolute inset-0 bg-gradient-to-br from-forest-400 to-forest-700 group-hover:scale-110 transition-transform duration-700"></div>
+                    {% endif %}
+
+                    <!-- Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+
+                    <!-- Icon badge -->
+                    <div class="absolute top-5 left-5 w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                        <i data-lucide="{{ activity.icon }}" class="w-5 h-5 text-white"></i>
+                    </div>
+
+                    <!-- Text -->
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 class="font-display text-2xl font-bold text-white mb-2">
+                            {{ activity.name }}
+                        </h3>
+                        <p class="text-white/60 text-sm leading-relaxed line-clamp-2 group-hover:text-white/80 transition-colors">
+                            {{ activity.description }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Fade edges -->
+        <div class="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-cream to-transparent pointer-events-none"></div>
+        <div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-cream to-transparent pointer-events-none"></div>
+    </div>
+
+    <!-- Mobile dots -->
+    <div class="flex justify-center gap-2 mt-8 sm:hidden">
+        {% if activities %}
+        {% for activity in activities %}
+        <button @click="goTo({{ forloop.counter0 }})"
+                class="w-2 h-2 rounded-full transition-all"
+                :class="current === {{ forloop.counter0 }} ? 'bg-forest-500 w-6' : 'bg-forest-200'"></button>
+        {% endfor %}
+        {% endif %}
+    </div>
+</section>
+
+<!-- ==================== GALLERY ==================== -->
+<section id="gallery" class="py-20 bg-white overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div class="text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-50 rounded-full mb-6">
+                <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+                <span class="text-forest-600 text-sm font-medium">Фотографии</span>
+            </div>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-4">
+                Галерея
+            </h2>
+        </div>
+    </div>
+
+    {% if gallery %}
+    <!-- Auto-scrolling gallery slider -->
+    <div class="relative" x-data="{ paused: false }">
+        <div class="flex gap-4 animate-scroll hover:[animation-play-state:paused]"
+             @mouseenter="paused = true" @mouseleave="paused = false"
+             :style="paused && 'animation-play-state: paused'">
+            <!-- Double the images for seamless loop -->
+            {% for img in gallery %}
+            <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden group cursor-pointer">
+                <img src="{{ img.image.url }}" alt="{{ img.caption }}"
+                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
+            </div>
+            {% endfor %}
+            {% for img in gallery %}
+            <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl overflow-hidden group cursor-pointer">
+                <img src="{{ img.image.url }}" alt="{{ img.caption }}"
+                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <!-- Placeholder gallery -->
+    <div class="flex gap-4 animate-scroll">
+        {% for color in "forest-300,blue-300,wood-300,forest-400,stone-300,emerald-300,blue-400,forest-200"|make_list %}
+        {% endfor %}
+        <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-forest-200 to-forest-300 flex items-center justify-center">
+            <div class="text-center text-forest-500/50"><i data-lucide="image" class="w-10 h-10 mx-auto mb-2"></i><span class="text-xs">Фото 1</span></div>
+        </div>
+        <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center">
+            <div class="text-center text-blue-500/50"><i data-lucide="image" class="w-10 h-10 mx-auto mb-2"></i><span class="text-xs">Фото 2</span></div>
+        </div>
+        <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-wood-200 to-wood-300 flex items-center justify-center">
+            <div class="text-center text-wood-500/50"><i data-lucide="image" class="w-10 h-10 mx-auto mb-2"></i><span class="text-xs">Фото 3</span></div>
+        </div>
+        <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-emerald-200 to-emerald-300 flex items-center justify-center">
+            <div class="text-center text-emerald-500/50"><i data-lucide="image" class="w-10 h-10 mx-auto mb-2"></i><span class="text-xs">Фото 4</span></div>
+        </div>
+        <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-forest-200 to-forest-400 flex items-center justify-center">
+            <div class="text-center text-forest-500/50"><i data-lucide="image" class="w-10 h-10 mx-auto mb-2"></i><span class="text-xs">Фото 5</span></div>
+        </div>
+        <div class="flex-shrink-0 w-72 h-72 sm:w-80 sm:h-80 rounded-2xl bg-gradient-to-br from-stone-200 to-stone-300 flex items-center justify-center">
+            <div class="text-center text-stone-500/50"><i data-lucide="image" class="w-10 h-10 mx-auto mb-2"></i><span class="text-xs">Фото 6</span></div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Photo divider: after gallery -->
+{% with divider=dividers.after_gallery %}
+{% if divider %}
+<div class="relative h-64 sm:h-80 overflow-hidden">
+    {% if divider.image %}<div class="absolute inset-0 photo-parallax bg-cover bg-center" style="background-image: url('{{ divider.image.url }}');"></div>{% else %}<div class="absolute inset-0 bg-gradient-to-br from-forest-700 to-forest-900"></div>{% endif %}
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative z-10 flex items-center justify-center h-full text-center px-4">
+        <div class="reveal">
+            <i data-lucide="{{ divider.icon }}" class="w-8 h-8 text-white/40 mx-auto mb-4"></i>
+            <p class="font-display text-2xl sm:text-3xl font-bold text-white hero-text-shadow max-w-2xl">{{ divider.title }}</p>
+            {% if divider.subtitle %}<p class="text-white/60 mt-3 text-sm">{{ divider.subtitle }}</p>{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ==================== HOW TO GET ==================== -->
+{% if routes %}
+<section id="routes" class="py-16 sm:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12 reveal">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-50 rounded-full mb-6">
+                <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+                <span class="text-forest-600 text-sm font-medium">Как добраться</span>
+            </div>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-4">
+                Маршруты из городов
+            </h2>
+            <p class="text-stone-400 text-lg max-w-2xl mx-auto">
+                Выберите свой город — мы покажем расстояние, время в пути и построим маршрут
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for route in routes %}
+            <div class="group bg-cream rounded-2xl p-6 border border-stone-100 hover:border-forest-200 hover:shadow-lg transition-all duration-300 reveal-scale reveal-delay-{{ forloop.counter }}"
+                 x-data="{ open: false }">
+                <!-- Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-forest-100 flex items-center justify-center flex-shrink-0 group-hover:bg-forest-200 transition-colors">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-forest-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl font-bold text-forest-700">{{ route.name }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="flex items-center gap-5 mb-4">
+                    <div class="flex items-center gap-1.5 text-sm text-stone-400">
+                        <i data-lucide="route" class="w-4 h-4 text-forest-400"></i>
+                        <span class="font-semibold text-forest-700">{{ route.distance_km }} км</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-sm text-stone-400">
+                        <i data-lucide="clock" class="w-4 h-4 text-forest-400"></i>
+                        <span class="font-semibold text-forest-700">{{ route.drive_time }}</span>
+                    </div>
+                </div>
+
+                <!-- Description (expandable) -->
+                {% if route.description %}
+                <div class="overflow-hidden transition-all duration-300"
+                     :class="open ? 'max-h-40 mb-4' : 'max-h-0'">
+                    <p class="text-stone-400 text-sm leading-relaxed">{{ route.description }}</p>
+                </div>
+                <button @click="open = !open" class="text-forest-500 text-xs font-medium hover:text-forest-700 transition-colors mb-4 flex items-center gap-1">
+                    <span x-text="open ? 'Свернуть' : 'Подробнее о дороге'"></span>
+                    <i data-lucide="chevron-down" class="w-3 h-3 transition-transform" :class="open && 'rotate-180'"></i>
+                </button>
+                {% endif %}
+
+                <!-- Route button -->
+                <a href="https://yandex.ru/maps/?rtext={{ route.lat }},{{ route.lon }}~43.9647,40.8833&rtt=auto"
+                   target="_blank"
+                   class="flex items-center justify-center gap-2 w-full py-3 bg-forest-500 text-white text-sm font-semibold rounded-xl hover:bg-forest-600 transition-all hover:shadow-md group/btn">
+                    <i data-lucide="navigation" class="w-4 h-4"></i>
+                    Построить маршрут
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-50 group-hover/btn:opacity-100 transition-opacity"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== BOOKING CTA ==================== -->
+<section class="py-16 sm:py-20 bg-gradient-to-b from-forest-50 to-cream">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-100 rounded-full mb-6">
+            <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+            <span class="text-forest-600 text-sm font-medium">Бронирование</span>
+        </div>
+        <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-4">
+            Забронируйте свой отдых
+        </h2>
+        <p class="text-stone-400 text-lg mb-8 max-w-xl mx-auto">
+            Выберите дом, даты — мы покажем стоимость и свободные дни. Календарь занятости, цены на будни и выходные.
+        </p>
+        <a href="{% url 'booking_page' %}"
+           class="inline-flex items-center gap-3 px-10 py-5 bg-forest-500 text-white font-bold rounded-2xl hover:bg-forest-600 transition-all hover:shadow-xl hover:shadow-forest-500/25 text-lg group">
+            <i data-lucide="calendar-check" class="w-6 h-6"></i>
+            Перейти к бронированию
+            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+        </a>
+    </div>
+</section>
+
+<!-- ==================== CONTACTS ==================== -->
+<section id="contacts" class="pt-10 sm:pt-12 pb-16 sm:pb-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-forest-50 rounded-full mb-6">
+                <div class="w-1.5 h-1.5 bg-forest-500 rounded-full"></div>
+                <span class="text-forest-600 text-sm font-medium">Связаться</span>
+            </div>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-4">
+                Контакты
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Contact cards -->
+            <div class="space-y-6">
+                {% if settings.phone %}
+                <a href="tel:{{ settings.phone }}" class="flex items-center gap-5 p-6 bg-white rounded-2xl border border-stone-100 hover:shadow-lg hover:border-forest-200 transition-all group">
+                    <div class="w-14 h-14 rounded-2xl bg-forest-50 flex items-center justify-center group-hover:bg-forest-100 transition-colors flex-shrink-0">
+                        <i data-lucide="phone" class="w-6 h-6 text-forest-500"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm text-stone-400 mb-1">Позвоните нам</div>
+                        <div class="text-lg font-semibold text-forest-700">{{ settings.phone }}</div>
+                    </div>
+                </a>
+                {% endif %}
+
+                {% if settings.whatsapp %}
+                <a href="https://wa.me/{{ settings.whatsapp }}" target="_blank" class="flex items-center gap-5 p-6 bg-white rounded-2xl border border-stone-100 hover:shadow-lg hover:border-green-200 transition-all group">
+                    <div class="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors flex-shrink-0">
+                        <i data-lucide="message-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm text-stone-400 mb-1">Напишите в WhatsApp</div>
+                        <div class="text-lg font-semibold text-forest-700">WhatsApp</div>
+                    </div>
+                </a>
+                {% endif %}
+
+                {% if settings.telegram %}
+                <a href="https://t.me/{{ settings.telegram }}" target="_blank" class="flex items-center gap-5 p-6 bg-white rounded-2xl border border-stone-100 hover:shadow-lg hover:border-blue-200 transition-all group">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors flex-shrink-0">
+                        <i data-lucide="send" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm text-stone-400 mb-1">Напишите в Telegram</div>
+                        <div class="text-lg font-semibold text-forest-700">@{{ settings.telegram }}</div>
+                    </div>
+                </a>
+                {% endif %}
+
+                <div class="flex items-center gap-5 p-6 bg-white rounded-2xl border border-stone-100">
+                    <div class="w-14 h-14 rounded-2xl bg-wood-50 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="map-pin" class="w-6 h-6 text-wood-500"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm text-stone-400 mb-1">Адрес</div>
+                        <div class="text-lg font-semibold text-forest-700">{{ settings.address }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="rounded-2xl overflow-hidden bg-stone-100 min-h-[400px] border border-stone-200">
+                {% if settings.yandex_map_embed %}
+                {{ settings.yandex_map_embed|safe }}
+                {% else %}
+                <div class="flex items-center justify-center h-full min-h-[400px] text-stone-400">
+                    <div class="text-center">
+                        <i data-lucide="map" class="w-16 h-16 mx-auto mb-3 text-stone-300"></i>
+                        <p class="font-medium">Карта</p>
+                        <p class="text-sm mt-1">Добавьте код карты Яндекс в настройках сайта</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sticky mobile CTA -->
+<div class="fixed bottom-0 left-0 right-0 z-50 sm:hidden sticky-cta" id="sticky-cta">
+    <div class="bg-white/95 backdrop-blur-md border-t border-stone-200 px-4 py-3 flex gap-3">
+        <a href="{% url 'booking_page' %}" class="flex-1 text-center py-3 bg-forest-500 text-white font-bold rounded-xl hover:bg-forest-600 transition-all text-sm">
+            Забронировать
+        </a>
+        <a href="tel:{{ settings.phone }}" class="w-12 flex items-center justify-center bg-forest-50 rounded-xl text-forest-600">
+            <i data-lucide="phone" class="w-5 h-5"></i>
+        </a>
+    </div>
+</div>
+
+</div><!-- /page-content -->
+
+{% endblock %}

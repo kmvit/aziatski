@@ -1,0 +1,154 @@
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Hide Alpine.js elements before load */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f5f7f8;
+}
+::-webkit-scrollbar-thumb {
+    background: #a8b8c4;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #6B7B8D;
+}
+
+/* Animations on scroll */
+.fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hero gradient animation */
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+.hero-gradient {
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+}
+
+/* Hero text shadow for readability */
+.hero-text-shadow {
+    text-shadow: 0 2px 30px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.5), 0 0 60px rgba(0,0,0,0.3);
+}
+
+/* Hero background slow zoom */
+@keyframes heroZoom {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+.hero-zoom {
+    animation: heroZoom 20s ease-out forwards;
+}
+
+/* Pulse delay utilities */
+.delay-700 {
+    animation-delay: 700ms;
+}
+.delay-1000 {
+    animation-delay: 1000ms;
+}
+
+/* Image hover zoom for house cards */
+.group:hover .group-hover\:scale-105 {
+    transform: scale(1.05);
+}
+
+/* Phone input formatting */
+input[type="tel"] {
+    letter-spacing: 0.5px;
+}
+
+/* Gallery auto-scroll animation */
+@keyframes scrollGallery {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.animate-scroll {
+    animation: scrollGallery 30s linear infinite;
+}
+.animate-scroll:hover {
+    animation-play-state: paused;
+}
+
+/* Scroll reveal animations */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* Scale reveal for cards */
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Floating animation for decorative elements */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+.animate-float {
+    animation: float 4s ease-in-out infinite;
+}
+
+/* Sticky mobile CTA */
+.sticky-cta {
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+.sticky-cta.visible {
+    transform: translateY(0);
+}
+
+/* Photo parallax dividers */
+.photo-parallax {
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    will-change: transform;
+}
+@supports (-webkit-touch-callout: none) {
+    /* Disable fixed attachment on iOS — not supported */
+    .photo-parallax { background-attachment: scroll; }
+}
+
+/* Map iframe responsive */
+section iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    border: 0;
+    border-radius: 1rem;
+}

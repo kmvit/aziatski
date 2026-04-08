@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Бронирование — Азиатский{% endblock %}
+{% block body_attrs %}data-nav-solid="true"{% endblock %}
+
+{% block content %}
+
+<section class="pt-28 pb-16 sm:pb-20"
+         x-data="bookingCalendar(new URLSearchParams(window.location.search).get('house') || '')"
+         x-init="init()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 mb-4">Бронирование</h1>
+            <p class="text-stone-400 text-lg max-w-xl mx-auto">Выберите дом, даты и оставьте заявку — мы свяжемся с вами для подтверждения</p>
+        </div>
+
+        <!-- Step 1: Select house -->
+        <div class="mb-12">
+            <h2 class="font-display text-xl font-bold text-forest-700 mb-6 flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-forest-500 text-white text-sm font-bold flex items-center justify-center">1</span>
+                Выберите дом
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for house in houses %}
+                <button @click="selectHouse({{ house.id }})"
+                        class="text-left rounded-2xl border-2 p-4 transition-all duration-300"
+                        :class="houseId == {{ house.id }} ? 'border-forest-500 bg-forest-50 shadow-lg' : 'border-stone-200 bg-white hover:border-forest-300'">
+                    <div class="aspect-[16/10] rounded-xl overflow-hidden bg-forest-100 mb-3">
+                        {% if house.get_main_image %}
+                        <img src="{{ house.get_main_image.image.url }}" alt="{{ house.name }}" class="w-full h-full object-cover" loading="lazy">
+                        {% else %}
+                        <div class="flex items-center justify-center h-full text-forest-400"><i data-lucide="home" class="w-8 h-8"></i></div>
+                        {% endif %}
+                    </div>
+                    <h3 class="font-display font-bold text-forest-700">{{ house.name }}</h3>
+                    <div class="flex items-center gap-2 mt-1 text-sm text-stone-400">
+                        <span>от {{ house.price_per_night }} &#x20bd;/сутки</span>
+                        <span>&middot;</span>
+                        <span>{{ house.guests_count }} гостей</span>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Step 2+3+4: Calendar + Price + Form (two columns on desktop) -->
+        <div x-show="houseId" x-transition class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+            <!-- Left: Calendar (3 cols) -->
+            <div class="lg:col-span-3">
+                <h2 class="font-display text-xl font-bold text-forest-700 mb-6 flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-full bg-forest-500 text-white text-sm font-bold flex items-center justify-center">2</span>
+                    Выберите даты
+                </h2>
+
+                <!-- Loading -->
+                <div x-show="loading" class="text-center py-12 text-stone-400">
+                    <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-forest-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    Загрузка...
+                </div>
+
+                <!-- Calendar -->
+                <div x-show="!loading" class="bg-white rounded-2xl border border-stone-200 p-4 sm:p-6">
+                    <!-- Nav -->
+                    <div class="flex items-center justify-between mb-6">
+                        <button @click="prevMonth()" :disabled="!canGoPrev()"
+                                class="w-10 h-10 rounded-xl border border-stone-200 flex items-center justify-center hover:bg-forest-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                            <i data-lucide="chevron-left" class="w-5 h-5 text-stone-500"></i>
+                        </button>
+                        <div class="flex gap-8">
+                            <template x-for="cm in calendarMonths" :key="cm.month + '-' + cm.year">
+                                <span class="font-display font-bold text-forest-700 capitalize text-lg" x-text="monthName(cm.month, cm.year)"></span>
+                            </template>
+                        </div>
+                        <button @click="nextMonth()"
+                                class="w-10 h-10 rounded-xl border border-stone-200 flex items-center justify-center hover:bg-forest-50 transition-colors">
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-stone-500"></i>
+                        </button>
+                    </div>
+
+                    <!-- Two months grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <template x-for="cm in calendarMonths" :key="cm.month + '-' + cm.year">
+                            <div>
+                                <div class="grid grid-cols-7 gap-1 mb-2">
+                                    <template x-for="day in daysOfWeek">
+                                        <div class="text-center text-xs font-semibold text-stone-400 py-1" x-text="day"></div>
+                                    </template>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1">
+                                    <!-- Empty cells for offset -->
+                                    <template x-for="_ in firstDayOfWeek(cm.month, cm.year)">
+                                        <div></div>
+                                    </template>
+                                    <!-- Day cells -->
+                                    <template x-for="d in daysInMonth(cm.month, cm.year)">
+                                        <div @click="selectDate(dateStr(cm.year, cm.month, d))"
+                                             @mouseenter="hoverDate = (checkIn && !checkOut) ? dateStr(cm.year, cm.month, d) : null"
+                                             @mouseleave="hoverDate = null"
+                                             class="relative text-center py-2 rounded-lg text-sm transition-all select-none"
+                                             :class="getDayClass(dateStr(cm.year, cm.month, d))">
+                                            <span x-text="d" class="block leading-tight"></span>
+                                            <span class="block text-[10px] leading-tight mt-0.5 opacity-60"
+                                                  x-text="formatPrice(getPrice(dateStr(cm.year, cm.month, d)))"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap gap-4 mt-6 pt-4 border-t border-stone-100 text-xs text-stone-400">
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-stone-100"></div> Занято</div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-amber-50 border border-amber-200"></div> Выходные</div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-red-50 border border-red-200"></div> Праздники</div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-forest-500"></div> Выбрано</div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-forest-100"></div> Диапазон</div>
+                    </div>
+
+                    <!-- Selected dates display -->
+                    <div x-show="checkIn" class="mt-4 pt-4 border-t border-stone-100 flex items-center gap-4 text-sm">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-forest-500"></i>
+                            <span class="text-stone-400">Заезд:</span>
+                            <span class="font-semibold text-forest-700" x-text="checkIn"></span>
+                        </div>
+                        <template x-if="checkOut">
+                            <div class="flex items-center gap-2">
+                                <span class="text-stone-300">&rarr;</span>
+                                <span class="text-stone-400">Выезд:</span>
+                                <span class="font-semibold text-forest-700" x-text="checkOut"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Price + Form (2 cols) -->
+            <div class="lg:col-span-2">
+                <div class="sticky top-28 space-y-6">
+
+                    <!-- Price breakdown -->
+                    <div x-show="breakdown && breakdown.length > 0" x-transition
+                         class="bg-white rounded-2xl border border-stone-200 p-6">
+                        <h3 class="font-display font-bold text-forest-700 mb-4 flex items-center gap-2">
+                            <i data-lucide="receipt" class="w-5 h-5"></i> Стоимость
+                        </h3>
+                        <div class="space-y-3">
+                            <template x-for="item in breakdown" :key="item.label">
+                                <div class="flex justify-between text-sm">
+                                    <div>
+                                        <span class="text-stone-500" x-text="item.label"></span>
+                                        <span class="text-stone-400" x-text="` × ${item.count} ноч.`"></span>
+                                    </div>
+                                    <span class="font-semibold text-stone-600" x-text="item.subtotal.toLocaleString('ru') + ' ₽'"></span>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="border-t border-stone-200 mt-4 pt-4 flex justify-between items-center">
+                            <div>
+                                <span class="text-stone-400 text-sm" x-text="`${totalNights} ноч.`"></span>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-display text-2xl font-bold text-forest-600" x-text="totalPrice.toLocaleString('ru') + ' ₽'"></div>
+                            </div>
+                        </div>
+                        <div x-show="hasConflict" class="mt-3 p-3 bg-red-50 rounded-xl text-red-600 text-sm font-medium">
+                            <i data-lucide="alert-circle" class="w-4 h-4 inline"></i> Выбранные даты пересекаются с существующим бронированием
+                        </div>
+                    </div>
+
+                    <!-- Contact form -->
+                    <div x-show="breakdown && breakdown.length > 0 && !hasConflict" x-transition
+                         class="bg-white rounded-2xl border border-stone-200 p-6">
+                        <h3 class="font-display font-bold text-forest-700 mb-4 flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-forest-500 text-white text-sm font-bold flex items-center justify-center">3</span>
+                            Ваши данные
+                        </h3>
+                        <form @submit.prevent="submitBooking()" novalidate>
+                            {% csrf_token %}
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-500 mb-1.5">Имя *</label>
+                                    <input type="text" x-model="formData.name" required
+                                           class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-forest-400 focus:ring-2 focus:ring-forest-400/20 outline-none transition-all bg-stone-50/50 text-sm"
+                                           placeholder="Иван">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-500 mb-1.5">Телефон *</label>
+                                    <input type="tel" x-model="formData.phone" required
+                                           class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-forest-400 focus:ring-2 focus:ring-forest-400/20 outline-none transition-all bg-stone-50/50 text-sm"
+                                           placeholder="+7 (999) 123-45-67">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-500 mb-1.5">Кол-во гостей</label>
+                                    <input type="number" x-model="formData.guests" min="1" max="20"
+                                           class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-forest-400 focus:ring-2 focus:ring-forest-400/20 outline-none transition-all bg-stone-50/50 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-stone-500 mb-1.5">Пожелания</label>
+                                    <textarea x-model="formData.message" rows="2"
+                                              class="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-forest-400 focus:ring-2 focus:ring-forest-400/20 outline-none transition-all bg-stone-50/50 resize-none text-sm"
+                                              placeholder="Комментарий..."></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" :disabled="formLoading || !formData.name || !formData.phone"
+                                    class="w-full mt-6 px-6 py-4 bg-forest-500 text-white font-bold rounded-xl hover:bg-forest-600 transition-all hover:shadow-lg text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                <span x-show="!formLoading">Забронировать за <span x-text="totalPrice.toLocaleString('ru')"></span> &#x20bd;</span>
+                                <span x-show="formLoading" x-cloak class="flex items-center gap-2">
+                                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    Отправка...
+                                </span>
+                            </button>
+                        </form>
+
+                        <!-- Success -->
+                        <div x-show="formSuccess" x-cloak x-transition class="mt-4 p-4 bg-forest-50 border border-forest-200 rounded-xl text-forest-700 text-center text-sm">
+                            <i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-2"></i>
+                            <p class="font-medium" x-text="formMessage"></p>
+                        </div>
+                        <!-- Error -->
+                        <div x-show="formError" x-cloak x-transition class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-center text-sm">
+                            <p class="font-medium" x-text="formMessage"></p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
