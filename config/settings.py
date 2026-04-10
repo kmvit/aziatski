@@ -39,17 +39,17 @@ def _env_list(key: str, default: list[str]) -> list[str]:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-DEBUG = _env_bool("DJANGO_DEBUG", False)
+DEBUG = _env_bool("DEBUG", False)
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = "django-insecure-dev-only-set-secret-key-in-env"
     else:
-        raise ImproperlyConfigured("Задайте переменную окружения DJANGO_SECRET_KEY")
+        raise ImproperlyConfigured("Задайте переменную окружения SECRET_KEY")
 
-ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", [])
-CSRF_TRUSTED_ORIGINS = [origin.rstrip("/") for origin in _env_list("DJANGO_CSRF_TRUSTED_ORIGINS", [])]
+ALLOWED_HOSTS = _env_list("ALLOWED_HOSTS", [])
+CSRF_TRUSTED_ORIGINS = [origin.rstrip("/") for origin in _env_list("CSRF_TRUSTED_ORIGINS", [])]
 
 # Django работает за Nginx (TLS завершается на прокси).
 # Эти настройки нужны, чтобы корректно определялся https и не срабатывал ложный CSRF 403.
