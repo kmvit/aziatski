@@ -25,6 +25,7 @@
 #   REQUIREMENTS_FILE — относительный путь до requirements.txt
 #   WSGI_MODULE       — python-путь до WSGI app, например config.wsgi:application
 #   STATIC_ROOT       — абсолютный путь до staticfiles (по умолчанию APP_DIR/DJANGO_DIR/staticfiles)
+#   MEDIA_ROOT        — абсолютный путь до media (по умолчанию APP_DIR/DJANGO_DIR/media)
 #   FRONTEND_DIR      — относительный путь до фронтенда с package.json (по умолчанию frontend, если найден)
 #   FRONTEND_BUILD_DIR — путь до собранного фронта (по умолчанию FRONTEND_DIR/dist)
 #
@@ -233,6 +234,7 @@ SOCKET_PATH="${APP_DIR}/${PROJECT_SLUG}.sock"
 GUNICORN_SERVICE="gunicorn-${PROJECT_SLUG}"
 NGINX_SITE="${PROJECT_SLUG}"
 STATIC_ROOT="${STATIC_ROOT:-${APP_DIR}/${DJANGO_DIR}/staticfiles}"
+MEDIA_ROOT="${MEDIA_ROOT:-${APP_DIR}/${DJANGO_DIR}/media}"
 ORIGIN="${APP_SCHEME}://${DOMAIN}"
 
 if [[ -z "${FRONTEND_DIR:-}" ]]; then
@@ -408,6 +410,7 @@ fi
 # Django logging может писать в BASE_DIR/logs/django.log.
 # Создаём каталог заранее, чтобы migrate/collectstatic не падали.
 mkdir -p "${APP_DIR}/${DJANGO_DIR}/logs"
+mkdir -p "${MEDIA_ROOT}"
 
 # миграции и статика
 .venv/bin/python "${MANAGE_PY_REL}" migrate --noinput
@@ -485,7 +488,7 @@ server {
     }
 
     location /media/ {
-        alias ${APP_DIR}/${DJANGO_DIR}/media/;
+        alias ${MEDIA_ROOT}/;
     }
 
     location /api/ {
@@ -538,6 +541,10 @@ server {
         alias ${STATIC_ROOT}/;
     }
 
+    location /media/ {
+        alias ${MEDIA_ROOT}/;
+    }
+
     location / {
         proxy_pass http://unix:${SOCKET_PATH};
         proxy_set_header Host \$host;
@@ -564,6 +571,7 @@ echo "[8/8] Готово."
 echo ""
 echo "  Приложение:  ${ORIGIN}"
 echo "  Статика:     ${STATIC_ROOT}/"
+echo "  Медиа:       ${MEDIA_ROOT}/"
 echo "  Gunicorn:    ${GUNICORN_SERVICE}.service"
 echo "  Nginx site:  ${NGINX_SITE}"
 if [[ "${ENABLE_FRONTEND}" == "true" ]]; then
