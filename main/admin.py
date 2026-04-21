@@ -11,6 +11,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         ('Контакты', {'fields': ('phone', 'whatsapp', 'telegram', 'address')}),
         ('Главный экран', {'fields': ('hero_title', 'hero_subtitle')}),
         ('О поселке', {'fields': ('about_title', 'about_text')}),
+        ('Фото блока "О поселке"', {'fields': ('about_image_1', 'about_image_2', 'about_image_3', 'about_image_4')}),
         ('Карта', {'fields': ('yandex_map_embed',)}),
     )
 

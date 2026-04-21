@@ -233,30 +233,46 @@
             <div class="grid grid-cols-2 gap-4 reveal reveal-delay-2">
                 <div class="space-y-4">
                     <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-forest-200 to-forest-300 aspect-[3/4] flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        {% if settings.about_image_1 %}
+                        <img src="{{ settings.about_image_1.url }}" alt="Фото о поселке 1" class="w-full h-full object-cover" loading="lazy">
+                        {% else %}
                         <div class="text-center text-forest-600/50 p-4">
                             <i data-lucide="mountain" class="w-12 h-12 mx-auto mb-2"></i>
                             <span class="text-xs">Фото горы</span>
                         </div>
+                        {% endif %}
                     </div>
                     <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 aspect-square flex items-center justify-center shadow-lg">
+                        {% if settings.about_image_2 %}
+                        <img src="{{ settings.about_image_2.url }}" alt="Фото о поселке 2" class="w-full h-full object-cover" loading="lazy">
+                        {% else %}
                         <div class="text-center text-blue-500/50 p-4">
                             <i data-lucide="waves" class="w-12 h-12 mx-auto mb-2"></i>
                             <span class="text-xs">Фото реки</span>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="space-y-4 pt-8">
                     <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-wood-100 to-wood-200 aspect-square flex items-center justify-center shadow-lg">
+                        {% if settings.about_image_3 %}
+                        <img src="{{ settings.about_image_3.url }}" alt="Фото о поселке 3" class="w-full h-full object-cover" loading="lazy">
+                        {% else %}
                         <div class="text-center text-wood-500/50 p-4">
                             <i data-lucide="home" class="w-12 h-12 mx-auto mb-2"></i>
                             <span class="text-xs">Фото поселка</span>
                         </div>
+                        {% endif %}
                     </div>
                     <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-forest-100 to-forest-200 aspect-[3/4] flex items-center justify-center shadow-lg">
+                        {% if settings.about_image_4 %}
+                        <img src="{{ settings.about_image_4.url }}" alt="Фото о поселке 4" class="w-full h-full object-cover" loading="lazy">
+                        {% else %}
                         <div class="text-center text-forest-500/50 p-4">
                             <i data-lucide="trees" class="w-12 h-12 mx-auto mb-2"></i>
                             <span class="text-xs">Фото природы</span>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

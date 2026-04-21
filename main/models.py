@@ -11,6 +11,10 @@ class SiteSettings(models.Model):
     hero_subtitle = models.TextField('Подзаголовок Hero', default='Уютные дома в живописном поселке Азиатский у реки Большая Лаба')
     about_title = models.CharField('Заголовок "О поселке"', max_length=200, default='Поселок Азиатский')
     about_text = models.TextField('Текст "О поселке"', default='')
+    about_image_1 = models.ImageField('Фото "О поселке" 1', upload_to='about/', blank=True, null=True)
+    about_image_2 = models.ImageField('Фото "О поселке" 2', upload_to='about/', blank=True, null=True)
+    about_image_3 = models.ImageField('Фото "О поселке" 3', upload_to='about/', blank=True, null=True)
+    about_image_4 = models.ImageField('Фото "О поселке" 4', upload_to='about/', blank=True, null=True)
     yandex_map_embed = models.TextField('Код карты Яндекс (iframe)', blank=True)
 
     class Meta:
