@@ -1,4 +1,6 @@
+from django import forms
 from django.contrib import admin
+from django.db.models import Max
 from django.utils.html import format_html
 from .models import SiteSettings, House, HouseImage, Activity, SectionDivider, RouteCity, HolidaySurcharge, GalleryImage, BookingRequest
 
@@ -24,12 +26,54 @@ class HouseImageInline(admin.TabularInline):
     extra = 1
 
 
+class MultipleImageInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleImageField(forms.ImageField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('required', False)
+        kwargs.setdefault('widget', MultipleImageInput(attrs={'multiple': True}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        if not data:
+            return []
+        if not isinstance(data, (list, tuple)):
+            data = [data]
+        clean_single_file = super().clean
+        return [clean_single_file(file, initial) for file in data]
+
+
+class HouseAdminForm(forms.ModelForm):
+    bulk_images = MultipleImageField(label='Загрузить несколько фото', help_text='Можно выбрать сразу несколько файлов.')
+
+    class Meta:
+        model = House
+        fields = '__all__'
+
+
 @admin.register(House)
 class HouseAdmin(admin.ModelAdmin):
+    form = HouseAdminForm
     list_display = ('name', 'price_per_night', 'weekend_price', 'guests_count', 'is_featured', 'order')
     list_editable = ('order', 'is_featured')
     prepopulated_fields = {'slug': ('name',)}
     inlines = [HouseImageInline]
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        files = form.cleaned_data.get('bulk_images') or []
+        if not files:
+            return
+
+        max_order = form.instance.images.aggregate(max_order=Max('order')).get('max_order') or 0
+        for index, image_file in enumerate(files, start=1):
+            HouseImage.objects.create(
+                house=form.instance,
+                image=image_file,
+                order=max_order + index,
+            )
 
 
 @admin.register(Activity)
