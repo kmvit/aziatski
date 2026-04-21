@@ -19,7 +19,11 @@
         </nav>
 
         <!-- Gallery -->
-        <div x-data="{ activeImage: 0, lightboxOpen: false }" @keydown.escape.window="lightboxOpen = false" class="mb-12">
+        <div x-data="{ activeImage: 0, lightboxOpen: false, totalImages: {{ house.images.count }} }"
+             @keydown.escape.window="lightboxOpen = false"
+             @keydown.arrow-right.window="if (lightboxOpen && totalImages > 1) { activeImage = (activeImage + 1) % totalImages }"
+             @keydown.arrow-left.window="if (lightboxOpen && totalImages > 1) { activeImage = (activeImage - 1 + totalImages) % totalImages }"
+             class="mb-12">
             {% if house.images.all %}
             <!-- Main Image -->
             <div class="rounded-3xl overflow-hidden aspect-[16/9] bg-stone-100 mb-4">
@@ -77,6 +81,20 @@
                         class="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white text-2xl leading-none">
                     &times;
                 </button>
+                {% if house.images.count > 1 %}
+                <button type="button"
+                        @click="activeImage = (activeImage - 1 + totalImages) % totalImages"
+                        class="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+                        aria-label="Предыдущее фото">
+                    <i data-lucide="chevron-left" class="w-7 h-7"></i>
+                </button>
+                <button type="button"
+                        @click="activeImage = (activeImage + 1) % totalImages"
+                        class="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+                        aria-label="Следующее фото">
+                    <i data-lucide="chevron-right" class="w-7 h-7"></i>
+                </button>
+                {% endif %}
                 <div class="w-full max-w-6xl max-h-full">
                     {% for img in house.images.all %}
                     <img x-show="activeImage === {{ forloop.counter0 }}"
@@ -85,6 +103,11 @@
                          class="w-full max-h-[90vh] object-contain rounded-2xl">
                     {% endfor %}
                 </div>
+                {% if house.images.count > 1 %}
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/15 text-white text-sm px-3 py-1.5 rounded-full">
+                    <span x-text="activeImage + 1"></span> / <span x-text="totalImages"></span>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
         </div>
