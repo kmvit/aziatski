@@ -213,11 +213,11 @@
                 <div class="grid grid-cols-3 gap-6 mt-10 pt-10 border-t border-stone-200"
                      x-data="{ shown: false, v1: 0, v2: 0, v3: 0 }"
                      x-intersect.once="shown = true;
-                        let i1 = setInterval(() => { v1 += 20; if(v1>=800) { v1=800; clearInterval(i1) } }, 30);
-                        let i2 = setInterval(() => { v2++; if(v2>=7) clearInterval(i2) }, 150);
+                        let i1 = setInterval(() => { v1 += 21; if(v1>=859) { v1=859; clearInterval(i1) } }, 30);
+                        let i2 = setInterval(() => { v2++; if(v2>=10) { v2=10; clearInterval(i2) } }, 150);
                         let i3 = setInterval(() => { v3 += 8; if(v3>=365) { v3=365; clearInterval(i3) } }, 20);">
                     <div>
-                        <div class="font-display text-3xl font-bold text-forest-600"><span x-text="v1">0</span>+</div>
+                        <div class="font-display text-3xl font-bold text-forest-600"><span x-text="v1">0</span></div>
                         <div class="text-sm text-stone-400 mt-1">метров над уровнем моря</div>
                     </div>
                     <div>
