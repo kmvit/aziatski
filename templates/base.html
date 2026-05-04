@@ -177,6 +177,18 @@
                             <i data-lucide="send" class="w-4 h-4"></i> Telegram
                         </a>
                         {% endif %}
+                        {% if settings.phone %}
+                        <a href="https://max.ru/{{ settings.phone|cut:' '|cut:'('|cut:')'|cut:'-' }}" target="_blank" class="flex items-center gap-2 text-sm hover:text-white transition-colors">
+                            <span class="w-4 h-4 rounded-full bg-gradient-to-br from-[#0077FF] to-[#7C3AED] flex items-center justify-center text-white text-[9px] font-extrabold leading-none">M</span>
+                            MAX
+                        </a>
+                        {% endif %}
+                        {% if settings.address %}
+                        <div class="flex items-start gap-2 text-sm pt-2 mt-2 border-t border-white/10">
+                            <i data-lucide="map-pin" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+                            <span>{{ settings.address }}</span>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

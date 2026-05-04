@@ -5,6 +5,20 @@ from django.utils.html import format_html
 from .models import SiteSettings, House, HouseImage, Activity, SectionDivider, RouteCity, HolidaySurcharge, GalleryImage, BookingRequest, BlogPost, BlogPostPhoto
 
 
+class EasyMDEWidget(forms.Textarea):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('attrs', {})
+        kwargs['attrs']['class'] = 'easymde-field'
+        super().__init__(*args, **kwargs)
+
+    class Media:
+        css = {'all': ('https://unpkg.com/easymde/dist/easymde.min.css',)}
+        js = (
+            'https://unpkg.com/easymde/dist/easymde.min.js',
+            'admin/js/easymde_init.js',
+        )
+
+
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
@@ -124,6 +138,8 @@ class BlogPostPhotoInline(admin.TabularInline):
 
 class BlogPostAdminForm(forms.ModelForm):
     bulk_photos = MultipleImageField(label='Загрузить несколько фото', help_text='Можно выбрать сразу несколько файлов.')
+    content = forms.CharField(label='Текст истории', widget=EasyMDEWidget())
+    excerpt = forms.CharField(label='Краткое описание', widget=EasyMDEWidget(attrs={'rows': 3}), required=False)
 
     class Meta:
         model = BlogPost

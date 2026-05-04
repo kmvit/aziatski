@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static markdown_extras %}
 
 {% block title %}{{ post.title }} — Блог об отдыхе в Азиатском{% endblock %}
 {% block meta_description %}{% if post.excerpt %}{{ post.excerpt|truncatechars:160 }}{% else %}{{ post.content|truncatechars:160 }}{% endif %}{% endblock %}
@@ -83,7 +83,7 @@
 
         <!-- Article body -->
         <div class="prose-custom text-stone-500 leading-relaxed text-lg space-y-5 mb-16">
-            {{ post.content|linebreaksbr }}
+            {{ post.content|markdownify }}
         </div>
 
         <!-- Photo gallery -->
