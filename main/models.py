@@ -176,6 +176,40 @@ class GalleryImage(models.Model):
         return self.caption or f'Фото {self.order}'
 
 
+class BlogPost(models.Model):
+    title = models.CharField('Заголовок', max_length=200)
+    slug = models.SlugField('URL', unique=True)
+    excerpt = models.TextField('Краткое описание', blank=True, help_text='Показывается в списке постов')
+    content = models.TextField('Текст истории')
+    cover_image = models.ImageField('Обложка', upload_to='blog/', blank=True, null=True)
+    published_date = models.DateField('Дата публикации')
+    is_published = models.BooleanField('Опубликован', default=True)
+    order = models.PositiveSmallIntegerField('Порядок', default=0)
+
+    class Meta:
+        verbose_name = 'Пост блога'
+        verbose_name_plural = 'Блог'
+        ordering = ['-published_date', '-order']
+
+    def __str__(self):
+        return self.title
+
+
+class BlogPostPhoto(models.Model):
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='photos', verbose_name='Пост')
+    image = models.ImageField('Фото', upload_to='blog/')
+    caption = models.CharField('Подпись', max_length=200, blank=True)
+    order = models.PositiveSmallIntegerField('Порядок', default=0)
+
+    class Meta:
+        verbose_name = 'Фото поста'
+        verbose_name_plural = 'Фото поста'
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.post.title} — фото {self.order}'
+
+
 class BookingRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Ожидает'),

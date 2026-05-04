@@ -5,9 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Азиатский — отдых в горах Кавказа{% endblock %}</title>
-    <meta name="description" content="Аренда уютных домов в горном поселке Азиатский, Карачаево-Черкесия. Река Большая Лаба, горы, джипинг, сплав, хайкинг.">
+    <meta name="description" content="{% block meta_description %}Аренда уютных домов в горном поселке Азиатский, Карачаево-Черкесия. Река Большая Лаба, горы, джипинг, сплав, хайкинг.{% endblock %}">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Азиатский">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Азиатский — отдых в горах Кавказа{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Аренда уютных домов в горном поселке Азиатский, Карачаево-Черкесия. Река Большая Лаба, горы, джипинг, сплав, хайкинг.{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.jpg' %}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Азиатский — отдых в горах Кавказа{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Аренда уютных домов в горном поселке Азиатский, Карачаево-Черкесия.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.jpg' %}{% endblock %}">
+
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="shortcut icon" href="/favicon.ico">
+
+    {% block schema %}{% endblock %}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,6 +94,8 @@
                        :class="scrolled ? 'text-stone-600' : 'text-white'">Дома</a>
                     <a href="{% url 'index' %}#contacts" class="text-sm font-semibold tracking-wide uppercase transition-colors hover:text-forest-400"
                        :class="scrolled ? 'text-stone-600' : 'text-white'">Контакты</a>
+                    <a href="{% url 'blog_list' %}" class="text-sm font-semibold tracking-wide uppercase transition-colors hover:text-forest-400"
+                       :class="scrolled ? 'text-stone-600' : 'text-white'">Блог</a>
                     <a href="{% url 'booking_page' %}"
                        class="px-5 py-2.5 bg-forest-500 text-white text-sm font-bold rounded-full hover:bg-forest-600 transition-all hover:shadow-lg hover:shadow-forest-500/25">
                         Забронировать
@@ -98,6 +121,7 @@
             <a href="{% url 'index' %}#activities" @click="mobileMenu = false" class="block text-stone-500 hover:text-forest-500 font-medium py-2">Активности</a>
             <a href="{% url 'index' %}#houses" @click="mobileMenu = false" class="block text-stone-500 hover:text-forest-500 font-medium py-2">Дома</a>
             <a href="{% url 'index' %}#contacts" @click="mobileMenu = false" class="block text-stone-500 hover:text-forest-500 font-medium py-2">Контакты</a>
+            <a href="{% url 'blog_list' %}" @click="mobileMenu = false" class="block text-stone-500 hover:text-forest-500 font-medium py-2">Блог</a>
             <a href="{% url 'booking_page' %}" @click="mobileMenu = false"
                class="block text-center px-5 py-3 bg-forest-500 text-white font-medium rounded-full hover:bg-forest-600 transition-all">
                 Забронировать
@@ -132,6 +156,7 @@
                         <a href="{% url 'index' %}#activities" class="block text-sm hover:text-white transition-colors">Активности</a>
                         <a href="{% url 'index' %}#houses" class="block text-sm hover:text-white transition-colors">Дома</a>
                         <a href="{% url 'booking_page' %}" class="block text-sm hover:text-white transition-colors">Бронирование</a>
+                        <a href="{% url 'blog_list' %}" class="block text-sm hover:text-white transition-colors">Блог</a>
                     </div>
                 </div>
                 <div>

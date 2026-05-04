@@ -5,10 +5,11 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
-from main.sitemaps import MainSitemap
+from main.sitemaps import MainSitemap, BlogSitemap
 
 sitemaps = {
     "main": MainSitemap,
+    "blog": BlogSitemap,
 }
 
 urlpatterns = [

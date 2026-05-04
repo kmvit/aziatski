@@ -1,6 +1,45 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Аренда домиков в горах Кавказа — поселок Азиатский, КЧР{% endblock %}
+{% block meta_description %}Снять домик в горном поселке Азиатский (Карачаево-Черкесия). Отдых у реки Большая Лаба: рафтинг, джипинг, хайкинг. Уютные дома от {{ settings.phone }}.{% endblock %}
+{% block og_description %}Снять домик в горном поселке Азиатский (Карачаево-Черкесия). Отдых у реки Большая Лаба: рафтинг, джипинг, хайкинг. Уютные дома для семейного отдыха.{% endblock %}
+{% block twitter_title %}Аренда домиков в горах Кавказа — поселок Азиатский, КЧР{% endblock %}
+{% block twitter_description %}Снять домик в горном поселке Азиатский (Карачаево-Черкесия). Отдых у реки Большая Лаба: рафтинг, джипинг, хайкинг.{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LodgingBusiness",
+  "name": "Азиатский",
+  "description": "Аренда уютных домов в горном поселке Азиатский у реки Большая Лаба. Горный отдых в Карачаево-Черкесии: рафтинг, джипинг, хайкинг.",
+  "url": "{{ request.scheme }}://{{ request.get_host }}",
+  "telephone": "{{ settings.phone }}",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "{{ settings.address }}",
+    "addressRegion": "Карачаево-Черкесская Республика",
+    "addressCountry": "RU"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "43.985",
+    "longitude": "41.123"
+  },
+  "amenityFeature": [
+    {"@type": "LocationFeatureSpecification", "name": "Рафтинг", "value": true},
+    {"@type": "LocationFeatureSpecification", "name": "Джипинг", "value": true},
+    {"@type": "LocationFeatureSpecification", "name": "Хайкинг", "value": true},
+    {"@type": "LocationFeatureSpecification", "name": "Река Большая Лаба", "value": true}
+  ],
+  "sameAs": [
+    {% if settings.telegram %}"https://t.me/{{ settings.telegram }}"{% endif %}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="relative" id="page-content">
 

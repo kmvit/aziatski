@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.db.models import Max
 from django.utils.html import format_html
-from .models import SiteSettings, House, HouseImage, Activity, SectionDivider, RouteCity, HolidaySurcharge, GalleryImage, BookingRequest
+from .models import SiteSettings, House, HouseImage, Activity, SectionDivider, RouteCity, HolidaySurcharge, GalleryImage, BookingRequest, BlogPost, BlogPostPhoto
 
 
 @admin.register(SiteSettings)
@@ -115,6 +115,42 @@ class HolidaySurchargeAdmin(admin.ModelAdmin):
 class GalleryImageAdmin(admin.ModelAdmin):
     list_display = ('caption', 'order')
     list_editable = ('order',)
+
+
+class BlogPostPhotoInline(admin.TabularInline):
+    model = BlogPostPhoto
+    extra = 1
+
+
+class BlogPostAdminForm(forms.ModelForm):
+    bulk_photos = MultipleImageField(label='Загрузить несколько фото', help_text='Можно выбрать сразу несколько файлов.')
+
+    class Meta:
+        model = BlogPost
+        fields = '__all__'
+
+
+@admin.register(BlogPost)
+class BlogPostAdmin(admin.ModelAdmin):
+    form = BlogPostAdminForm
+    list_display = ('title', 'published_date', 'is_published', 'order')
+    list_editable = ('is_published', 'order')
+    prepopulated_fields = {'slug': ('title',)}
+    inlines = [BlogPostPhotoInline]
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        files = form.cleaned_data.get('bulk_photos') or []
+        if not files:
+            return
+        from django.db.models import Max
+        max_order = form.instance.photos.aggregate(max_order=Max('order')).get('max_order') or 0
+        for index, image_file in enumerate(files, start=1):
+            BlogPostPhoto.objects.create(
+                post=form.instance,
+                image=image_file,
+                order=max_order + index,
+            )
 
 
 @admin.register(BookingRequest)

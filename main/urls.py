@@ -8,6 +8,9 @@ urlpatterns = [
     path('booking/create/', views.booking_create, name='booking_create'),
     path('api/calendar/<int:house_id>/', views.api_calendar_data, name='api_calendar'),
     path('api/price/', views.api_calculate_price, name='api_calculate_price'),
+    # Blog
+    path('blog/', views.blog_list, name='blog_list'),
+    path('blog/<slug:slug>/', views.blog_detail, name='blog_detail'),
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dashboard/login/', views.dashboard_login, name='dashboard_login'),

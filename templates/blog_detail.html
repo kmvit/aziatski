@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} — Блог об отдыхе в Азиатском{% endblock %}
+{% block meta_description %}{% if post.excerpt %}{{ post.excerpt|truncatechars:160 }}{% else %}{{ post.content|truncatechars:160 }}{% endif %}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{% if post.excerpt %}{{ post.excerpt|truncatechars:200 }}{% else %}{{ post.content|truncatechars:200 }}{% endif %}{% endblock %}
+{% if post.cover_image %}{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{{ post.cover_image.url }}{% endblock %}{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{{ post.cover_image.url }}{% endblock %}{% endif %}
+{% block twitter_title %}{{ post.title }}{% endblock %}
+{% block twitter_description %}{% if post.excerpt %}{{ post.excerpt|truncatechars:200 }}{% else %}{{ post.content|truncatechars:200 }}{% endif %}{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{ post.title }}",
+  "description": "{% if post.excerpt %}{{ post.excerpt|truncatechars:160 }}{% else %}{{ post.content|truncatechars:160 }}{% endif %}",
+  "datePublished": "{{ post.published_date|date:'c' }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Азиатский",
+    "url": "{{ request.scheme }}://{{ request.get_host }}"
+  }{% if post.cover_image %},
+  "image": {"@type": "ImageObject", "url": "{{ request.scheme }}://{{ request.get_host }}{{ post.cover_image.url }}"}{% endif %}
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Главная", "item": "{{ request.scheme }}://{{ request.get_host }}/"},
+    {"@type": "ListItem", "position": 2, "name": "Блог", "item": "{{ request.scheme }}://{{ request.get_host }}/blog/"},
+    {"@type": "ListItem", "position": 3, "name": "{{ post.title }}", "item": "{{ request.build_absolute_uri }}"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block body_attrs %}data-nav-solid="true"{% endblock %}
+
+{% block content %}
+
+<section class="pt-20 pb-24 bg-cream">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-stone-400 mb-8">
+            <a href="{% url 'index' %}" class="hover:text-forest-500 transition-colors">Главная</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <a href="{% url 'blog_list' %}" class="hover:text-forest-500 transition-colors">Блог</a>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            <span class="text-forest-600 font-medium truncate max-w-xs">{{ post.title }}</span>
+        </nav>
+
+        <!-- Cover image -->
+        {% if post.cover_image %}
+        <div class="rounded-3xl overflow-hidden aspect-[16/9] mb-10 shadow-lg shadow-forest-500/10">
+            <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full h-full object-cover">
+        </div>
+        {% endif %}
+
+        <!-- Article header -->
+        <header class="mb-10">
+            <div class="flex items-center gap-2 text-sm text-stone-400 font-medium mb-4">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                <time datetime="{{ post.published_date|date:'Y-m-d' }}">{{ post.published_date|date:"j F Y" }}</time>
+            </div>
+            <h1 class="font-display text-4xl sm:text-5xl font-bold text-forest-700 leading-tight mb-4">
+                {{ post.title }}
+            </h1>
+            {% if post.excerpt %}
+            <p class="text-xl text-stone-400 leading-relaxed">{{ post.excerpt }}</p>
+            {% endif %}
+        </header>
+
+        <!-- Divider -->
+        <div class="border-t border-stone-100 mb-10"></div>
+
+        <!-- Article body -->
+        <div class="prose-custom text-stone-500 leading-relaxed text-lg space-y-5 mb-16">
+            {{ post.content|linebreaksbr }}
+        </div>
+
+        <!-- Photo gallery -->
+        {% with photos=post.photos.all %}
+        {% if photos %}
+        <div class="mt-12">
+            <h2 class="font-display text-3xl font-bold text-forest-700 mb-8 flex items-center gap-3">
+                <i data-lucide="images" class="w-7 h-7 text-forest-400"></i>
+                Фотографии
+            </h2>
+
+            <div x-data="{ activeImage: 0, lightboxOpen: false, totalImages: {{ photos|length }} }"
+                 @keydown.escape.window="lightboxOpen = false"
+                 @keydown.arrow-right.window="if (lightboxOpen && totalImages > 1) { activeImage = (activeImage + 1) % totalImages }"
+                 @keydown.arrow-left.window="if (lightboxOpen && totalImages > 1) { activeImage = (activeImage - 1 + totalImages) % totalImages }">
+
+                <!-- Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                    {% for photo in photos %}
+                    <button type="button"
+                            @click="activeImage = {{ forloop.counter0 }}; lightboxOpen = true"
+                            class="group relative overflow-hidden rounded-2xl aspect-square bg-stone-100 cursor-zoom-in">
+                        <img src="{{ photo.image.url }}" alt="{{ photo.caption }}"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        {% if photo.caption %}
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p class="text-white text-xs leading-tight">{{ photo.caption }}</p>
+                        </div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                            <i data-lucide="zoom-in" class="w-7 h-7 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow"></i>
+                        </div>
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <!-- Lightbox -->
+                <div x-show="lightboxOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                     @click.self="lightboxOpen = false"
+                     class="fixed inset-0 z-[100] bg-black/85 p-4 sm:p-8 flex items-center justify-center"
+                     x-cloak>
+
+                    <button type="button" @click="lightboxOpen = false"
+                            class="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white text-2xl leading-none flex items-center justify-center">
+                        &times;
+                    </button>
+
+                    {% if photos|length > 1 %}
+                    <button type="button"
+                            @click="activeImage = (activeImage - 1 + totalImages) % totalImages"
+                            class="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center">
+                        <i data-lucide="chevron-left" class="w-7 h-7"></i>
+                    </button>
+                    <button type="button"
+                            @click="activeImage = (activeImage + 1) % totalImages"
+                            class="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center">
+                        <i data-lucide="chevron-right" class="w-7 h-7"></i>
+                    </button>
+                    {% endif %}
+
+                    <div class="w-full max-w-5xl max-h-full">
+                        {% for photo in photos %}
+                        <div x-show="activeImage === {{ forloop.counter0 }}" class="text-center">
+                            <img src="{{ photo.image.url }}" alt="{{ photo.caption }}"
+                                 class="max-h-[85vh] mx-auto object-contain rounded-2xl">
+                            {% if photo.caption %}
+                            <p class="text-white/70 text-sm mt-3">{{ photo.caption }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if photos|length > 1 %}
+                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/15 text-white text-sm px-3 py-1.5 rounded-full">
+                        <span x-text="activeImage + 1"></span> / {{ photos|length }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Back link -->
+        <div class="mt-16 pt-8 border-t border-stone-100">
+            <a href="{% url 'blog_list' %}"
+               class="inline-flex items-center gap-2 text-forest-600 font-semibold hover:text-forest-700 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Все истории
+            </a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

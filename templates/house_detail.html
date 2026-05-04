@@ -1,7 +1,63 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ house.name }} — Азиатский{% endblock %}
+{% block title %}{{ house.name }} — аренда дома в горах Азиатский, КЧР{% endblock %}
+{% block meta_description %}{{ house.name }} в поселке Азиатский — до {{ house.guests_count }} гостей, {{ house.bedrooms }} спальни. Аренда от {{ house.price_per_night }} ₽/сутки. Горный отдых у реки Большая Лаба, КЧР.{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ house.name }} — аренда дома в горах Азиатский{% endblock %}
+{% block og_description %}{{ house.name }} — до {{ house.guests_count }} гостей, {{ house.bedrooms }} спальни. От {{ house.price_per_night }} ₽/сутки. Горный отдых у реки Большая Лаба.{% endblock %}
+{% with main_img=house.get_main_image %}{% if main_img %}{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{{ main_img.image.url }}{% endblock %}{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{{ main_img.image.url }}{% endblock %}{% endif %}{% endwith %}
+{% block twitter_title %}{{ house.name }} — аренда дома в горах Азиатский{% endblock %}
+{% block twitter_description %}{{ house.name }} — до {{ house.guests_count }} гостей. От {{ house.price_per_night }} ₽/сутки у реки Большая Лаба, КЧР.{% endblock %}
+
+{% block schema %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Accommodation",
+  "name": "{{ house.name }}",
+  "description": "{{ house.tagline|default:house.description|truncatechars:160 }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "numberOfRooms": {{ house.bedrooms }},
+  "occupancy": {"@type": "QuantitativeValue", "maxValue": {{ house.guests_count }}},
+  "containedInPlace": {
+    "@type": "LodgingBusiness",
+    "name": "Азиатский",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "{{ settings.address }}",
+      "addressRegion": "Карачаево-Черкесская Республика",
+      "addressCountry": "RU"
+    }
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ house.price_per_night }}",
+    "priceCurrency": "RUB",
+    "priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "price": "{{ house.price_per_night }}",
+      "priceCurrency": "RUB",
+      "unitText": "сутки"
+    }
+  }{% with main_img=house.get_main_image %}{% if main_img %},
+  "photo": {"@type": "ImageObject", "url": "{{ request.scheme }}://{{ request.get_host }}{{ main_img.image.url }}"}{% endif %}{% endwith %}
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Главная", "item": "{{ request.scheme }}://{{ request.get_host }}/"},
+    {"@type": "ListItem", "position": 2, "name": "Дома", "item": "{{ request.scheme }}://{{ request.get_host }}/#houses"},
+    {"@type": "ListItem", "position": 3, "name": "{{ house.name }}", "item": "{{ request.build_absolute_uri }}"}
+  ]
+}
+</script>
+{% endblock %}
+
 {% block body_attrs %}data-nav-solid="true"{% endblock %}
 
 {% block content %}

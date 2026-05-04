@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count, Q
-from .models import SiteSettings, House, Activity, SectionDivider, RouteCity, GalleryImage, BookingRequest
+from .models import SiteSettings, House, Activity, SectionDivider, RouteCity, GalleryImage, BookingRequest, BlogPost
 from .forms import BookingForm
 from .pricing import calculate_booking_price, get_booked_dates, get_prices_map, check_overlap
 
@@ -99,6 +99,18 @@ def api_calculate_price(request):
     result['has_conflict'] = has_conflict
 
     return JsonResponse(result)
+
+
+def blog_list(request):
+    posts = BlogPost.objects.filter(is_published=True)
+    settings = SiteSettings.load()
+    return render(request, 'blog_list.html', {'posts': posts, 'settings': settings})
+
+
+def blog_detail(request, slug):
+    post = get_object_or_404(BlogPost, slug=slug, is_published=True)
+    settings = SiteSettings.load()
+    return render(request, 'blog_detail.html', {'post': post, 'settings': settings})
 
 
 # ==================== DASHBOARD ====================
