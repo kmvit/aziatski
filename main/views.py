@@ -1,12 +1,17 @@
 from datetime import date, timedelta
+import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count, Q
+from django.conf import settings
+from django.core.mail import send_mail
 from .models import SiteSettings, House, Activity, SectionDivider, RouteCity, GalleryImage, BookingRequest, BlogPost
 from .forms import BookingForm
 from .pricing import calculate_booking_price, get_booked_dates, get_prices_map, check_overlap
+
+logger = logging.getLogger(__name__)
 
 
 def index(request):
@@ -54,6 +59,7 @@ def booking_create(request):
                 result = calculate_booking_price(booking.house, booking.check_in, booking.check_out)
                 booking.total_price = result['total_price']
             booking.save()
+            _send_booking_notification(booking)
             return JsonResponse({
                 'success': True,
                 'message': 'Заявка отправлена! Мы свяжемся с вами в ближайшее время.',
@@ -99,6 +105,35 @@ def api_calculate_price(request):
     result['has_conflict'] = has_conflict
 
     return JsonResponse(result)
+
+
+def _send_booking_notification(booking: BookingRequest) -> None:
+    if not getattr(settings, "BOOKING_NOTIFY_EMAIL", ""):
+        return
+
+    house_name = booking.house.name if booking.house else "Дом не выбран"
+    total_price = f"{booking.total_price} ₽" if booking.total_price else "не рассчитана"
+    message = (
+        "Новая заявка на бронирование\n\n"
+        f"Дом: {house_name}\n"
+        f"Имя: {booking.name}\n"
+        f"Телефон: {booking.phone}\n"
+        f"Заезд: {booking.check_in}\n"
+        f"Выезд: {booking.check_out}\n"
+        f"Гостей: {booking.guests}\n"
+        f"Стоимость: {total_price}\n"
+        f"Комментарий: {booking.message or '-'}\n"
+    )
+    try:
+        send_mail(
+            subject=f"Новая заявка на бронирование: {house_name}",
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.BOOKING_NOTIFY_EMAIL],
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception("Не удалось отправить уведомление о бронировании")
 
 
 def blog_list(request):
