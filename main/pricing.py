@@ -19,7 +19,7 @@ def get_price_for_date(house, d):
             return int(base * (100 + s.percentage_markup) / 100), s.name
 
     # No surcharge — use base pricing
-    is_weekend = d.weekday() in (5, 6)
+    is_weekend = d.weekday() in (4, 5, 6)
     if is_weekend and house.weekend_price:
         return house.weekend_price, 'weekend'
     return house.price_per_night, 'weekday'
@@ -32,7 +32,7 @@ def models_house_q(house):
 
 
 def _base_price(house, d):
-    is_weekend = d.weekday() in (5, 6)
+    is_weekend = d.weekday() in (4, 5, 6)
     if is_weekend and house.weekend_price:
         return house.weekend_price
     return house.price_per_night
@@ -48,7 +48,7 @@ def calculate_booking_price(house, check_in, check_out):
             'date': current.isoformat(),
             'price': price,
             'label': label,
-            'is_weekend': current.weekday() in (5, 6),
+            'is_weekend': current.weekday() in (4, 5, 6),
         })
         current += timedelta(days=1)
 

@@ -161,7 +161,7 @@ function bookingCalendar(initialHouseId = '') {
         },
 
         isBooked(ds) { return this.bookedDates.has(ds); },
-        isWeekend(ds) { const d = new Date(ds); return d.getDay() === 0 || d.getDay() === 6; },
+        isWeekend(ds) { const d = new Date(ds); const w = d.getDay(); return w === 5 || w === 6 || w === 0; },
         isHoliday(ds) { return ds in this.holidays; },
 
         isSelected(ds) { return ds === this.checkIn || ds === this.checkOut; },
