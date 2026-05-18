@@ -89,23 +89,20 @@
                 <p class="text-white/80 text-lg sm:text-xl leading-relaxed mb-5 max-w-lg hero-text-shadow">
                     Аренда уютных домов в горах Кавказа. Рафтинг, джипинг, хайкинг — всё рядом.
                 </p>
-                <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-8">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                     <i data-lucide="shield-check" class="w-4 h-4 text-emerald-300"></i>
-                    <span class="text-white/90 text-sm font-medium">Закрытый посёлок со шлагбаумом — въезд по пропускам</span>
+                    <span class="text-white/90 text-sm font-medium">Дачный поселок, круглосуточно охраняется</span>
                 </div>
-                <a href="#houses"
-                   class="inline-flex items-center gap-2 px-8 py-4 bg-forest-500 text-white font-bold rounded-full hover:bg-forest-600 transition-all hover:shadow-lg hover:shadow-forest-500/30 text-base sm:text-lg group">
-                    Выбрать дом
-                    <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
-                </a>
             </div>
         </div>
     </div>
 
-    <!-- Scroll indicator — positioned relative to section, not content -->
-    <div class="absolute bottom-36 left-1/2 -translate-x-1/2 z-10 animate-bounce hidden sm:block">
-        <i data-lucide="chevron-down" class="w-6 h-6 text-white/50"></i>
-    </div>
+    <!-- CTA — по центру внизу hero -->
+    <a href="#houses"
+       class="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-10 inline-flex flex-col items-center gap-1.5 px-8 py-3.5 bg-forest-500 text-white font-bold rounded-full hover:bg-forest-600 transition-all hover:shadow-lg hover:shadow-forest-500/30 text-base sm:text-lg group">
+        <span>Выбрать дом</span>
+        <i data-lucide="chevron-down" class="w-5 h-5 group-hover:translate-y-0.5 transition-transform"></i>
+    </a>
 
     <!-- Weather + Route — compact, bottom right -->
     <div class="absolute bottom-4 sm:bottom-6 right-4 sm:right-8 lg:right-16 z-20">

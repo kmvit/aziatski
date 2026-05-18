@@ -167,6 +167,11 @@
                             <i data-lucide="phone" class="w-4 h-4"></i> {{ settings.phone }}
                         </a>
                         {% endif %}
+                        {% if settings.phone_2 %}
+                        <a href="tel:{{ settings.phone_2 }}" class="flex items-center gap-2 text-sm hover:text-white transition-colors">
+                            <i data-lucide="phone" class="w-4 h-4"></i> {{ settings.phone_2 }}
+                        </a>
+                        {% endif %}
                         {% if settings.whatsapp %}
                         <a href="https://wa.me/{{ settings.whatsapp }}" target="_blank" class="flex items-center gap-2 text-sm hover:text-white transition-colors">
                             <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp

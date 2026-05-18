@@ -22,7 +22,7 @@ class EasyMDEWidget(forms.Textarea):
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
-        ('Контакты', {'fields': ('phone', 'whatsapp', 'telegram', 'address')}),
+        ('Контакты', {'fields': ('phone', 'phone_2', 'whatsapp', 'telegram', 'address')}),
         ('Главный экран', {'fields': ('hero_title', 'hero_subtitle')}),
         ('О поселке', {'fields': ('about_title', 'about_text')}),
         ('Фото блока "О поселке"', {'fields': ('about_image_1', 'about_image_2', 'about_image_3', 'about_image_4')}),

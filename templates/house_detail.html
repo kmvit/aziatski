@@ -296,7 +296,15 @@
                     <a href="tel:{{ settings.phone }}"
                        class="block w-full text-center px-6 py-3 bg-forest-50 text-forest-600 font-medium rounded-xl hover:bg-forest-100 transition-all">
                         <span class="flex items-center justify-center gap-2">
-                            <i data-lucide="phone" class="w-4 h-4"></i> Позвонить
+                            <i data-lucide="phone" class="w-4 h-4"></i> {{ settings.phone }}
+                        </span>
+                    </a>
+                    {% endif %}
+                    {% if settings.phone_2 %}
+                    <a href="tel:{{ settings.phone_2 }}"
+                       class="block w-full text-center px-6 py-3 mt-3 bg-forest-50 text-forest-600 font-medium rounded-xl hover:bg-forest-100 transition-all">
+                        <span class="flex items-center justify-center gap-2">
+                            <i data-lucide="phone" class="w-4 h-4"></i> {{ settings.phone_2 }}
                         </span>
                     </a>
                     {% endif %}

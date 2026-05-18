@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 
 class SiteSettings(models.Model):
     phone = models.CharField('Телефон', max_length=20, default='+7 (999) 123-45-67')
+    phone_2 = models.CharField('Второй телефон', max_length=20, blank=True)
     whatsapp = models.CharField('WhatsApp', max_length=20, blank=True)
     telegram = models.CharField('Telegram', max_length=100, blank=True)
     address = models.CharField('Адрес', max_length=255, default='КЧР, Урупский район, п. Азиатский')
